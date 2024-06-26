@@ -2,6 +2,7 @@ import json
 import mpire
 
 from src.BaseExperiment import BaseExperiment
+from src.filesystem import save_data
 
 
 class Experiment(object):
@@ -19,4 +20,7 @@ class Experiment(object):
         print('run experiment')
         with mpire.WorkerPool(n_jobs=mpire.cpu_count(), daemon =False) as pool:
             baseExperiments = pool.map(BaseExperiment.run, self.baseExperiments)
+        results = [dicts for dict_list in baseExperiments for dicts in dict_list]
+        save_data(results, self.name)
         print('finish experiment')
+

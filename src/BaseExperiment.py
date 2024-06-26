@@ -40,16 +40,10 @@ class BaseExperiment(object):
         else:
             with mpire.WorkerPool(n_jobs=mpire.cpu_count()) as pool:
                 results = pool.imap(self.run_untimed, range(0, self.repeat), progress_bar=True)
-        self.save_data(results, timing)
+        results = [res for res in results]
+        return results
 
-    def save_data(self, results, timed=False):
-        print('Saving data...')
-        dataframe = pd.DataFrame(results)
-        if timed:
-            dataframe.to_csv("results/{}/timed_{}_{}.csv".format(self.exp_name, self.dataname, self.min_points))
-        else:
-            dataframe.to_csv("results/{}/{}_{}.csv".format(self.exp_name, self.dataname, self.min_points))
-        print('saving finished')
+
 
     def run_timing(self, i):
         X, y = self.get_X_y()
@@ -67,7 +61,7 @@ class BaseExperiment(object):
         st_dcsi = time.process_time()
         dcsi = dcsiscore(X, y, self.min_points)
         end_dcsi = time.process_time()
-        results = {'Run': i, 'DBCV': dbcv, 'DISCO': disco_, 'Silhouette': silhouette, 'DCSI': dcsi,
+        results = {'Data': self.dataname,'Min_Points':self.min_points,'Run': i, 'DBCV': dbcv, 'DISCO': disco_, 'Silhouette': silhouette, 'DCSI': dcsi,
                    'Time_DBCV': end_dbcv - st_dbcv,
                    'Time_DISCO': end_disco - st_disco, 'Time_Silhouette': end_sil - st_sil,
                    'Time_DCSI': end_dcsi - st_dcsi}
@@ -82,5 +76,5 @@ class BaseExperiment(object):
         disco_ = disco(X, y, self.min_points)
         silhouette = silhouette_score(X, y)
         dcsi = dcsiscore(X, y, self.min_points)
-        results = {'Run': i, 'DBCV': dbcv, 'DISCO': disco_, 'Silhouette': silhouette, 'DCSI': dcsi}
+        results = {'Data': self.dataname,'Min_Points':self.min_points,'Run': i, 'DBCV': dbcv, 'DISCO': disco_, 'Silhouette': silhouette, 'DCSI': dcsi}
         return results
