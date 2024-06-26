@@ -1,0 +1,7 @@
+{
+  "name": "optimize",
+  "data": ["synthetic_2_2"],
+  "min_points": [2,4,5,10,50],
+  "repeat": 1,
+  "timed": 0
+}
