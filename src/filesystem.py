@@ -1,10 +1,24 @@
 import pandas as pd
 
+
+def check_dir_exists(dir_name):
+    import os
+    return os.path.isdir(dir_name)
+
+
+def create_dir(dir_name):
+    if not check_dir_exists(dir_name):
+        import os
+        os.mkdir(dir_name)
+
+
 def save_data(results, exp_name):
     print('Saving data...')
     dataframe = pd.DataFrame(results)
     import datetime
     timestamp = datetime.datetime.now().timestamp()
     formatted_string = datetime.datetime.fromtimestamp(timestamp).strftime("%m-%d-%H-%M-%S")
-    dataframe.to_csv("results/{}/combined_{}.csv".format(exp_name,formatted_string))
+    dir_name = "results/{}".format(exp_name)
+    create_dir(dir_name)
+    dataframe.to_csv("{}/combined_{}.csv".format(dir_name, formatted_string))
     print('saving finished')

@@ -6,7 +6,10 @@ import time
 from mpire import WorkerPool
 
 from src.DataLoader import DataLoader
+from src.Evaluation.CDBW.CDBW import CDbw
+from src.Evaluation.CVDD.CVDD import CVDDIndex
 from src.Evaluation.DCSI.dcsi import dcsiscore
+from src.Evaluation.S_Dbw.sdbw import S_Dbw
 from src.Evaluation.Silhouette.silhouette import silhouette_score
 from src.Evaluation.DBCV.DBCV_Base import validity_index
 from src.Evaluation.DISCO.disco import disco
@@ -32,14 +35,11 @@ class BaseExperiment(object):
     def get_X_y(self):
         return self.X, self.y
 
-    def run(self, timing=False):
+    def run(self):
         print('Running baseexperiment')
-        if timing:
-            with mpire.WorkerPool(n_jobs=mpire.cpu_count()) as pool:
-                results = pool.imap(self.run_timing, range(0, self.repeat), progress_bar=True)
-        else:
-            with mpire.WorkerPool(n_jobs=mpire.cpu_count()) as pool:
-                results = pool.imap(self.run_untimed, range(0, self.repeat), progress_bar=True)
+        with mpire.WorkerPool(n_jobs=mpire.cpu_count()) as pool:
+        #with mpire.WorkerPool(n_jobs=1) as pool:
+            results = pool.imap(self.run_timing, range(0, self.repeat), progress_bar=True)
         results = [res for res in results]
         return results
 
@@ -51,6 +51,7 @@ class BaseExperiment(object):
             X, y = self.dataloader.get_shuffled()
         st_dbcv = time.process_time()
         dbcv = validity_index(X, y)
+        dbcv = -1
         end_dbcv = time.process_time()
         st_disco = time.process_time()
         disco_ = disco(X, y, self.min_points)
@@ -61,20 +62,19 @@ class BaseExperiment(object):
         st_dcsi = time.process_time()
         dcsi = dcsiscore(X, y, self.min_points)
         end_dcsi = time.process_time()
-        results = {'Data': self.dataname,'Min_Points':self.min_points,'Run': i, 'DBCV': dbcv, 'DISCO': disco_, 'Silhouette': silhouette, 'DCSI': dcsi,
-                   'Time_DBCV': end_dbcv - st_dbcv,
-                   'Time_DISCO': end_disco - st_disco, 'Time_Silhouette': end_sil - st_sil,
-                   'Time_DCSI': end_dcsi - st_dcsi}
+        st_cvdd = time.process_time()
+        cvdd = CVDDIndex(X,y)
+        end_cvdd = time.process_time()
+        st_cdbw = time.process_time()
+        cdbw = CDbw(X, y)
+        end_cdbw = time.process_time()
+        st_sdbw = time.process_time()
+        sdbw = S_Dbw(X, y)
+        end_sdbw = time.process_time()
+        results = {'Data': self.dataname,'Min_Points':self.min_points,'Run': i, 'DBCV': dbcv, 'DISCO': disco_,
+                   'Silhouette': silhouette, 'DCSI': dcsi, 'CVDD': cvdd, 'CDBW': cdbw, 'S_dbw': sdbw,
+                   'Time_DBCV': end_dbcv - st_dbcv, 'Time_DISCO': end_disco - st_disco,
+                   'Time_Silhouette': end_sil - st_sil, 'Time_DCSI': end_dcsi - st_dcsi, 'Time_CVDD': end_cvdd-st_cvdd,
+                   'Time_CDBW': end_cdbw-st_cdbw, 'Time_SDBW': end_sdbw-st_sdbw}
         return results
 
-    def run_untimed(self, i):
-        X, y = self.get_X_y()
-        if i != 0:
-            X, y = self.dataloader.get_shuffled()
-        #dbcv = validity_index(X, y)
-        dbcv = -1
-        disco_ = disco(X, y, self.min_points)
-        silhouette = silhouette_score(X, y)
-        dcsi = dcsiscore(X, y, self.min_points)
-        results = {'Data': self.dataname,'Min_Points':self.min_points,'Run': i, 'DBCV': dbcv, 'DISCO': disco_, 'Silhouette': silhouette, 'DCSI': dcsi}
-        return results

@@ -8,11 +8,10 @@ class DataLoader(object):
 
     def __init__(self, dataname):
         """
-            Construct ClusteringAlgorithm object and set corresponding to algorithm name provided.
+            Construct DataLoader object and set corresponding to dataname name provided.
 
             Parameters:
-                dataname (str): name of the dataset. Defaults to 'default'.
-                categorical (boolean): whether to include categorical data. Defaults to True.
+                dataname (str): name of the dataset.
 
         """
         self.__name = dataname
@@ -36,6 +35,5 @@ class DataLoader(object):
         shuffled_data = shuffled_data.sample(frac=1)
         # we need labels
         shuffled_labels = shuffled_data[self.__data_config['target']].to_numpy()
-        # first ten are features rest are groundtruth cluster and sensitive attribute
         shuffled_features = shuffled_data.loc[:, shuffled_data.columns != self.__data_config['target']].to_numpy()
         return shuffled_features, shuffled_labels

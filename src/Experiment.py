@@ -19,6 +19,7 @@ class Experiment(object):
     def run(self):
         print('run experiment')
         with mpire.WorkerPool(n_jobs=mpire.cpu_count(), daemon =False) as pool:
+        #with mpire.WorkerPool(n_jobs=1, daemon=False) as pool:
             baseExperiments = pool.map(BaseExperiment.run, self.baseExperiments)
         results = [dicts for dict_list in baseExperiments for dicts in dict_list]
         save_data(results, self.name)

@@ -306,7 +306,7 @@ def density_separation(X, labels, cluster_id1, cluster_id2,
 
 
 def validity_index(X, labels, metric='sqeuclidean',
-                    d=None, per_cluster_scores=False, mst_raw_dist=False, verbose=False, algorithm='prim',  **kwd_args):
+                    d=None, per_cluster_scores=False, mst_raw_dist=False, verbose=False, algorithm='prim_official',  **kwd_args):
     """
     Compute the density based cluster validity index for the
     clustering specified by `labels` and for each cluster in `labels`.
