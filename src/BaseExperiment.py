@@ -50,8 +50,7 @@ class BaseExperiment(object):
         if i != 0:
             X, y = self.dataloader.get_shuffled()
         st_dbcv = time.process_time()
-        dbcv = validity_index(X, y)
-        dbcv = -1
+        dbcv = validity_index(X, y)[0]
         end_dbcv = time.process_time()
         st_disco = time.process_time()
         disco_ = disco(X, y, self.min_points)
@@ -72,7 +71,7 @@ class BaseExperiment(object):
         sdbw = S_Dbw(X, y)
         end_sdbw = time.process_time()
         results = {'Data': self.dataname,'Min_Points':self.min_points,'Run': i, 'DBCV': dbcv, 'DISCO': disco_,
-                   'Silhouette': silhouette, 'DCSI': dcsi, 'CVDD': cvdd, 'CDBW': cdbw, 'S_dbw': sdbw,
+                   'Silhouette': silhouette, 'DCSI': dcsi, 'CVDD': cvdd, 'CDBW': cdbw, 'SDBW': sdbw,
                    'Time_DBCV': end_dbcv - st_dbcv, 'Time_DISCO': end_disco - st_disco,
                    'Time_Silhouette': end_sil - st_sil, 'Time_DCSI': end_dcsi - st_dcsi, 'Time_CVDD': end_cvdd-st_cvdd,
                    'Time_CDBW': end_cdbw-st_cdbw, 'Time_SDBW': end_sdbw-st_sdbw}
