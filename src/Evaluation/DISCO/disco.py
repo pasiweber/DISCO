@@ -7,7 +7,7 @@ from scipy.sparse import issparse
 from src.Evaluation.dcdistances.dctree import DCTree
 
 
-def disco(X, labels, min_points = 5):
+def disco_score(X, labels, min_points = 5):
     dc_distances = DCTree(X, min_points=min_points, no_fastindex=False).dc_distances()
     silhouette_dc = silhouette_score(dc_distances, labels, metric='precomputed')
     return silhouette_dc

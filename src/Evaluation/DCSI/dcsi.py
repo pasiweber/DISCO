@@ -4,7 +4,7 @@ from scipy.spatial.distance import cdist
 from scipy.sparse.csgraph import minimum_spanning_tree
 
 
-def dcsiscore(data, partition, min_pts=5):
+def dcsi_score(data, partition, min_pts=5):
     clusters = partition
     for i in range(len(clusters)):
         if np.sum(partition == clusters[i]) == 1:

@@ -6,12 +6,12 @@ import time
 from mpire import WorkerPool
 
 from src.DataLoader import DataLoader
-from src.Evaluation.CDBW.CDBW import CDbw
-from src.Evaluation.CVDD.CVDD import CVDDIndex
+from src.Evaluation.CDBW.cdbw import CDbw
+from src.Evaluation.CVDD.cvdd import CVDDIndex
 from src.Evaluation.DCSI.dcsi import dcsiscore
 from src.Evaluation.S_Dbw.sdbw import S_Dbw
 from src.Evaluation.Silhouette.silhouette import silhouette_score
-from src.Evaluation.DBCV.DBCV_Base import validity_index
+from src.Evaluation.DBCV.dbcv import validity_index
 from src.Evaluation.DISCO.disco import disco
 
 

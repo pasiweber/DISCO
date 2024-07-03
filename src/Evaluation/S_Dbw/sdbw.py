@@ -428,7 +428,7 @@ def Scat(X, unique_labels, labels, method):
     return result
 
 
-def S_Dbw(X, labels, centers_id=None, method='Tong', alg_noise='comb',
+def sdbw_score(X, labels, centers_id=None, method='Tong', alg_noise='comb',
           centr='mean', nearest_centr=True, metric='euclidean'):
     """
     Compute the S_Dbw validity index
