@@ -94,4 +94,4 @@ def dc_dunn_score(data, labels, min_points=5, p: float = 2):
     labels = torch.from_numpy(labels)
     pairwise_distance, max_distance = _dunn_index_update(data, labels, min_points, p)
     result = _dunn_index_compute(pairwise_distance, max_distance)
-    return result.numpy()
+    return result.numpy().item()

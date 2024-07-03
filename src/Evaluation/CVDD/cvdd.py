@@ -24,7 +24,7 @@ def fast_PathbasedDist(d):
     return np.std(d, axis=1) / np.mean(d, axis=1)
 
 
-def cvdd_score(X, piX, k):
+def cvdd_score(X, piX, k=7):
     d = squareform(pdist(X, metric='minkowski', p=2))  # Euclidean distance of X
     try:
         DD = Density_involved_distance(d, k)  # Density-involved distance of X

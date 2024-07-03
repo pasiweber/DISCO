@@ -465,11 +465,11 @@ def dbcv_score(X, labels, metric='sqeuclidean',
         cluster_size = np.sum(labels == i)
         result += (cluster_size / n_samples) * cluster_validity_indices[i]
 
-    if per_cluster_scores:
-        return result, cluster_validity_indices, internal_mst_per_cluster
-    else:
-        return result, internal_mst_per_cluster
-
+    #if per_cluster_scores:
+    #    return result, cluster_validity_indices, internal_mst_per_cluster
+    #else:
+    #    return result, internal_mst_per_cluster
+        return result
 def kruskal_mst_with_mutual_reachability(mutual_reachability):
     n_vertices = mutual_reachability.shape[0]
     edges = [(i, j, mutual_reachability[i, j]) for i in range(n_vertices) for j in range(i + 1, n_vertices) if mutual_reachability[i, j] != np.inf]
