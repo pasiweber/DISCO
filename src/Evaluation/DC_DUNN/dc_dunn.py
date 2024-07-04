@@ -22,7 +22,7 @@ from torch import Tensor
 from src.Evaluation.dcdistances.dctree import DCTree
 
 
-def _dunn_index_update(data, labels, min_points, p: float):
+def _dunn_index_update(data, labels, min_points):
     """Update and return variables required to compute the Dunn index.
 
     Args:
@@ -71,7 +71,7 @@ def _dunn_index_compute(intercluster_distance: Tensor, max_intracluster_distance
     return intercluster_distance.min() / max_intracluster_distance.max()
 
 
-def dc_dunn_score(data, labels, min_points=5, p: float = 2):
+def dc_dunn_score(data, labels, min_points=5):
     """Compute the Dunn index.
 
     Args:
@@ -92,6 +92,6 @@ def dc_dunn_score(data, labels, min_points=5, p: float = 2):
     """
     data = torch.from_numpy(data)
     labels = torch.from_numpy(labels)
-    pairwise_distance, max_distance = _dunn_index_update(data, labels, min_points, p)
+    pairwise_distance, max_distance = _dunn_index_update(data, labels, min_points)
     result = _dunn_index_compute(pairwise_distance, max_distance)
     return result.numpy().item()
