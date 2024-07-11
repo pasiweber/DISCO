@@ -2,6 +2,7 @@ import numpy as np
 from sklearn.preprocessing import LabelEncoder
 import functools
 from sklearn.metrics.pairwise import _VALID_METRICS, pairwise_distances, pairwise_distances_chunked
+from sklearn.neighbors import KDTree
 from scipy.sparse import issparse
 
 from src.Evaluation.dcdistances.dctree import DCTree
@@ -9,8 +10,48 @@ from src.Evaluation.dcdistances.dctree import DCTree
 
 def disco_score(X, labels, min_points = 5):
     dc_distances = DCTree(X, min_points=min_points, no_fastindex=False).dc_distances()
-    silhouette_dc = silhouette_score(dc_distances, labels, metric='precomputed')
-    return silhouette_dc
+    silhouette_dc_values = silhouette_samples(
+        dc_distances[np.ix_(labels != -1, labels != -1)],
+        labels[labels != -1],
+        metric="precomputed",
+    )
+    noise_values = noise_eval(X, labels, min_points, dc_distances)
+
+    return np.mean(np.concatenate((silhouette_dc_values, noise_values)))
+
+
+def noise_eval(X, labels, min_points=5, dc_distances=None):
+    if dc_distances is None:
+        dc_distances = DCTree(X, min_points=min_points, no_fastindex=False).dc_distances()
+
+    # Noise evaluation
+    tree = KDTree(X)
+    core_dists, _ = tree.query(X, k=min_points)
+    core_dists = core_dists.max(axis=1)
+
+    cluster_ids = set(labels[labels != -1])
+    max_core_dist = np.empty(len(cluster_ids))
+    for i, id in enumerate(cluster_ids):
+        max_core_dist[i] = core_dists[labels == id].max()
+
+    noise_core_prop = np.full(len(labels[labels == -1]), np.inf)
+    for i in range(len(cluster_ids)):
+        noise_core_prop_i = (core_dists[labels == -1] - max_core_dist[i]) / np.maximum(
+            core_dists[labels == -1], max_core_dist[i]
+        )
+        noise_core_prop = np.minimum(noise_core_prop, noise_core_prop_i)
+
+    noise_dc = np.full(len(labels[labels == -1]), np.inf)
+    for i, id in enumerate(cluster_ids):
+        min_dist_cluster_i = np.min(dc_distances[np.ix_(labels == -1, labels == id)], axis=1)
+        noise_dc_i = (min_dist_cluster_i - max_core_dist[i]) / np.maximum(
+            min_dist_cluster_i, max_core_dist[i]
+        )
+        noise_dc = np.minimum(noise_dc, noise_dc_i)
+
+    return (noise_core_prop + noise_dc) / 2
+
+
 def silhouette_score(
         X, labels, *, metric="euclidean", sample_size=None, random_state=None, **kwds
 ):

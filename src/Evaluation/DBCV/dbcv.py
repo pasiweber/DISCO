@@ -56,7 +56,7 @@ def max_ratio(stacked_distances):
 
 
 def distances_between_points(X, labels, cluster_id,
-                                    metric='sqeuclidean', d=None, no_coredist=False,
+                                    metric='euclidean', d=None, no_coredist=False,
                                     print_max_raw_to_coredist_ratio=False, **kwd_args):
     """
     Compute pairwise distances for all the points of a cluster.
@@ -305,7 +305,7 @@ def density_separation(X, labels, cluster_id1, cluster_id2,
         return mr_dist_matrix.min()
 
 
-def dbcv_score(X, labels, metric='sqeuclidean',
+def dbcv_score(X, labels, metric='euclidean',
                     d=None, per_cluster_scores=False, mst_raw_dist=False, verbose=False, algorithm='prim_official',  **kwd_args):
     """
     Compute the density based cluster validity index for the
@@ -470,6 +470,8 @@ def dbcv_score(X, labels, metric='sqeuclidean',
     #else:
     #    return result, internal_mst_per_cluster
         return result
+
+
 def kruskal_mst_with_mutual_reachability(mutual_reachability):
     n_vertices = mutual_reachability.shape[0]
     edges = [(i, j, mutual_reachability[i, j]) for i in range(n_vertices) for j in range(i + 1, n_vertices) if mutual_reachability[i, j] != np.inf]
@@ -491,6 +493,8 @@ def kruskal_mst_with_mutual_reachability(mutual_reachability):
     for i, (u, v, w) in enumerate(mst_edges):
         mst_formatted[i] = [u, v, w]
     return mst_formatted
+
+
 def prim_mst_with_mutual_reachability(mutual_reachability):
 
     # Prims algorithm
@@ -568,6 +572,8 @@ def prim_mst_with_mutual_reachability(mutual_reachability):
     for i, (u, v, w) in enumerate(G["MST_edges"]):
         mst_formatted[i] = [u, v, w]
     return mst_formatted
+
+
 def internal_minimal_spanning_tree_Prim(mrd):
     """
     Compute the minimal spanning tree and exclude external nodes and edges.

@@ -1,17 +1,27 @@
+import os
+import sys
+
+parent_folder = os.path.dirname(os.path.abspath("./"))
+sys.path.append(parent_folder)
+
+
+from src.Evaluation.DISCO.disco import disco_score as DISCO
+from src.Evaluation.DC_DUNN.dc_dunn import dc_dunn_score as DC_DUNN
+
+# Competitors
+from src.Evaluation.DBCV.dbcv import dbcv_score as DBCV
+from src.Evaluation.DCSI.dcsi import dcsi_score as DCSI
+from src.Evaluation.S_Dbw.sdbw import sdbw_score as S_DBW
 from src.Evaluation.CDBW.cdbw import cdbw_score as CDBW
 from src.Evaluation.CVDD.cvdd import cvdd_score as CVDD
 from src.Evaluation.CVNN.cvnn import cvnn_score as CVNN
-from src.Evaluation.DBCV.dbcv import dbcv_score as DBCV
-from src.Evaluation.DCSI.dcsi import dcsi_score as DCSI
-from src.Evaluation.DISCO.disco import disco_score as DISCO
-from src.Evaluation.DC_DUNN.dc_dunn import dc_dunn_score as DC_DUNN
-from src.Evaluation.DUNN.dunn import dunn_score as DUNN
 from src.Evaluation.DSI.dsi import dsi_score as DSI
-from src.Evaluation.S_Dbw.sdbw import sdbw_score as S_DBW
 
+# Gauss
 from sklearn.metrics import silhouette_score as SILHOUETTE
-from sklearn.metrics import davies_bouldin_score as DB_SKLEARN
-from sklearn.metrics import calinski_harabasz_score as CH_SKLEARN
+from src.Evaluation.DUNN.dunn import dunn_score as DUNN
+from sklearn.metrics import davies_bouldin_score as DB
+from sklearn.metrics import calinski_harabasz_score as CH
 
 
 METRICS = {
@@ -28,6 +38,6 @@ METRICS = {
     # Gauss
     "SILHOUETTE": SILHOUETTE,
     "DUNN": DUNN,
-    "DB": DB_SKLEARN,
-    "CH": CH_SKLEARN,
+    "DB": DB,
+    "CH": CH,
 }

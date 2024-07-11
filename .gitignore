@@ -1,2 +1,7 @@
-__pycache__
-.cache
+__pycache__/
+
+.cache/
+.cache_magic/
+
+imgs/
+results/**/*.csv
