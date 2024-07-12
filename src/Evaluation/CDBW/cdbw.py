@@ -532,7 +532,7 @@ def separation(n_clusters, stdev, middle_point, dist_min, n_cl_rep, n_points_in_
     return sep
 
 
-def cdbw_score(X, labels, metric="euclidean", alg_noise='filter', intra_dens_inf=False, s=3, multipliers=False):
+def cdbw_score(X, labels, metric="euclidean", alg_noise='filter', intra_dens_inf=False, s=10, multipliers=False):
     """
     Calculate CDbw-index for cluster validation, as defined in [1]
 
