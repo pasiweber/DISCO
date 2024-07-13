@@ -41,7 +41,7 @@ with WorkerPool(n_jobs=10, use_dill=True) as pool:
 
             for metric_name, metric_fn in METRICS.items():
                 async_results[(dataset, run, metric_name)] = pool.apply_async(
-                    exec_metric, args=(metric_fn, X_, l_)
+                    exec_metric, args=(X_, l_, metric_fn)
                 )
 
     for dataset in RealWorldDatasets:

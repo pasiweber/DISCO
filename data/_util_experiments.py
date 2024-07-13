@@ -31,6 +31,12 @@ def cache(filename, func, args=[], kwargs={}, recalc=False):
         return result
 
 
+def convert_to_numpy(datasets):
+    datasets_np = np.empty((len(datasets), len(datasets[0])), dtype=object)
+    datasets_np[:] = datasets
+    return datasets_np
+
+
 def insert_dict(dict, key_value_dict):
     for key, value in key_value_dict.items():
         dict[key].append(value)
@@ -53,7 +59,7 @@ def exec_metric(X, l, metric_fn, args=[], kwargs={}):
     return value, end_time - start_time, end_process_time - start_process_time
 
 
-def calc_eval_measures(X, l, metrics=METRICS, name=None, task_timeout=None):
+def calc_eval_measures(X, l, metrics=METRICS, name=None, runs=10, task_timeout=None):
     """Calculate all evaluation measures for a given dataset with data `X` and labels `l`."""
 
     with WorkerPool(n_jobs=48, use_dill=True) as pool:
@@ -61,7 +67,7 @@ def calc_eval_measures(X, l, metrics=METRICS, name=None, task_timeout=None):
         async_results = {}
 
         np.random.seed(0)
-        seeds = np.random.choice(10_000, size=10, replace=False)
+        seeds = np.random.choice(10_000, size=runs, replace=False)
 
         for run, seed in enumerate(seeds):
             np.random.seed(seed)
@@ -76,7 +82,7 @@ def calc_eval_measures(X, l, metrics=METRICS, name=None, task_timeout=None):
 
         eval_results = defaultdict(list)
 
-        for run in range(10):
+        for run in range(runs):
             for metric_name in metrics.keys():
                 value, real_time, cpu_time = async_results[(run, metric_name)].get()
 
@@ -110,7 +116,7 @@ def calc_eval_measures_for_multiple_datasets(
         for run in range(len(data[param_value])):
             X, l = data[param_value][run]
             eval_results = calc_eval_measures(
-                X, l, metrics=metrics, name=param_values[param_value], task_timeout=task_timeout
+                X, l, metrics=metrics, name=param_values[param_value], runs=1, task_timeout=task_timeout
             )
             merge_dicts(eval_results_all, eval_results)
     return eval_results_all
