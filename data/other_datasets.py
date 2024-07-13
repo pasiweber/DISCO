@@ -11,7 +11,6 @@ DATASETS_FOLDER = f"{CURRENT_DIRECTORY}/datasets"
 
 ### Datasets ###
 
-
 class Datasets(Enum):
     # Tabular data
     Synth_low = "Synth_low"
@@ -35,16 +34,6 @@ class Datasets(Enum):
     FMNIST = "FMNIST"
     KMNIST = "KMNIST"
 
-    @classmethod
-    def get_experiments_list(cls):
-        return [dataset for dataset in cls if dataset not in cls.__get_excluded()]
-
-    @classmethod
-    def __get_excluded(cls):
-        return [
-            Datasets.Weizmann,
-            Datasets.Keck,
-        ]
 
     @property
     def id(self):
@@ -133,11 +122,9 @@ def load_original_dataset(dataset_id):
 
 def standardize(X, l, axis=None):
     std = np.std(X, axis=axis)
+    X = X[:, std != 0]  # Remove features which are identical over all samples
     mean = np.mean(X, axis=axis)
-    if axis is not None:
-        std = np.expand_dims(std, axis)
-        mean = np.expand_dims(mean, axis)
-    X = (X - mean) / std
+    X = (X - mean) / std[std != 0]
     return X, l
 
 

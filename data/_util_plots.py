@@ -1,40 +1,37 @@
 import numpy as np
 import matplotlib.pyplot as plt
+import matplotlib.gridspec as gridspec
 import seaborn as sns
-import time
-
-from sklearn.neighbors import NearestNeighbors
 
 
-def insert_dict(dict, key_value_dict):
-    for key, value in key_value_dict.items():
-        dict[key].append(value)
+def plot_datasets(data, param_values, rows=5, cols=5, figsize=2.0):
+    """Plots all datasets in data with corresponding param_value as title.
+    `fig_x` columns and `fig_y` rows.
 
+    Args:
+        data: 2d matrix of type [datasets x runs]
+        param_values: 1d matrix with parameter values per dataset. Used for title.
+    """
 
-def exec_metric(metric_fn, X, l):
-    start_time = time.time()
-    start_process_time = time.process_time()
-    value = metric_fn(X, l)
-    end_process_time = time.process_time()
-    end_time = time.time()
-    return value, end_time - start_time, end_process_time - start_process_time
+    fig = plt.figure(
+        figsize=(figsize * cols, (figsize + 0.2) * rows),
+        layout="tight",
+    )
+    G = gridspec.GridSpec(rows, cols)
 
+    length = min(len(data), len(param_values), cols * rows)
+    data = data[:length]
+    param_values = param_values[:length]
 
-def add_noise(X, l, n_noise, eps):
-    noise = np.empty((n_noise, X.shape[1]))
-    noise_too_near = np.array(range(len(noise)))
-    while len(noise_too_near) > 0:
-        noise[noise_too_near] = np.random.uniform(
-            np.min(X, axis=0), np.max(X, axis=0), size=(len(noise_too_near), X.shape[1])
-        )
-        nbrs = NearestNeighbors(n_neighbors=1).fit(X)
-        dists, _ = nbrs.kneighbors(noise)
-        noise_too_near = np.where(dists < eps)[0]
+    for param_value in range(0, len(data)):
+        ax = plt.subplot(G[param_value // cols, param_value % cols])
+        ax.set_xticks([])
+        ax.set_yticks([])
+        ax.set_title(f"{param_values[param_value]}")
+        X, l = data[param_value][0]
+        ax.scatter(X[:, 0], X[:, 1], s=1, c=l)
 
-    X_ = np.vstack((X, noise))
-    l_ = np.hstack((l, np.array([-1] * len(noise))))
-
-    return X_, l_
+    return fig
 
 
 def plot_lineplot(
@@ -49,6 +46,8 @@ def plot_lineplot(
     errorbar="se",
     highlight=1,
 ):
+    """Plot a line plot for a dataframe."""
+
     plt.figure(figsize=figsize)
     highlight -= 1
 
@@ -127,7 +126,9 @@ def plot_barplot(
     figsize=(15, 5),
     errorbar="se",
 ):
-    plt.figure(figsize=figsize)#
+    """Plot a barplot for a dataframe."""
+
+    plt.figure(figsize=figsize)
     sns.set_theme(style="whitegrid", palette="bright")
 
     ax = sns.barplot(

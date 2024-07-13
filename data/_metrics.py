@@ -1,3 +1,4 @@
+import pandas as pd
 import os
 import sys
 
@@ -41,3 +42,31 @@ METRICS = {
     "DB": DB,
     "CH": CH,
 }
+
+
+SELECTED_METRICS = [
+    "DISCO",
+    # "DC_DUNN",
+    ### Competitors
+    "DBCV",
+    "DCSI",
+    # "S_DBW",
+    "CDBW",
+    "CVDD",
+    # "CVNN",
+    "DSI",
+    ### Gauss
+    "SILHOUETTE",
+    # "DUNN",
+    # "DB",
+    # "CH",
+]
+
+
+def create_and_filter_df(eval_results, selected_metrics=SELECTED_METRICS, sort=False):
+    df = pd.DataFrame(data=eval_results)
+    df = df[df.measure.isin(selected_metrics)]
+    if sort:
+        df["measure"] = pd.Categorical(df["measure"], selected_metrics)
+        df = df.sort_values("measure")
+    return df

@@ -15,21 +15,30 @@ from data.real_world_datasets import Datasets as RealWorldDatasets
 from tqdm import tqdm
 
 
-for dataset in RealWorldDatasets:
-    if os.path.exists(f"./../results/real_world/{dataset.id}.csv"):
-        print("Skipped", dataset.name)
-        continue
+if sys.argv[1] == "standardized":
+    standardized = True
+    print("Use data with z-normalization\n")
+elif sys.argv[1] == "normal":
+    standardized = False
+    print("Use data without normalization\n")
+else:
+    print("Need to select `standardized` or `normal`!\n")
+    exit()
 
+
+for dataset in RealWorldDatasets.get_experiments_list():
     print("Start", dataset.name)
-    X, l = dataset.original_data
+
+    if standardized:
+        X, l = dataset.standardized_data
+    else:
+        X, l = dataset.original_data
 
     X = X[l != -1]
     l = l[l != -1]
 
-    eval_results = defaultdict(list)
-
     np.random.seed(0)
-    seeds = np.random.choice(10_000, size=10, replace=False)
+    seeds = np.random.choice(10_000, size=1, replace=False)
 
     for run in tqdm(range(len(seeds))):
         np.random.seed(seeds[run])
@@ -38,6 +47,21 @@ for dataset in RealWorldDatasets:
         l_ = l[shuffle_data_index]
 
         for metric_name, metric_fn in METRICS.items():
+
+            if standardized:
+                save_folder = "real_world_standardized"
+            else:
+                save_folder = "real_world"
+
+            path = f"./../results/{save_folder}/{dataset.id}/{metric_name}_{run}.csv"
+            if os.path.exists(path):
+                print(f"Skipped - Dataset: {dataset.name}, Run: {run}, Metric: {metric_name}")
+                continue
+
+            print(f"Calc - Dataset: {dataset.name}, Run: {run}, Metric: {metric_name}")
+
+            eval_results = defaultdict(list)
+
             (value, real_time, cpu_time) = exec_metric(metric_fn, X_, l_)
             insert_dict(
                 eval_results,
@@ -51,8 +75,9 @@ for dataset in RealWorldDatasets:
                 },
             )
 
-    df = pd.DataFrame(data=eval_results)
-    df.to_csv(f"./../results/real_world/{dataset.id}.csv", index=False)
+            os.makedirs(os.path.dirname(path), exist_ok=True)
+            df = pd.DataFrame(data=eval_results)
+            df.to_csv(path, index=False)
 
     print("End", dataset.name)
 
