@@ -1,8 +1,14 @@
 import numpy as np
 import pandas as pd
-import gc
 import os
 import sys
+import time
+
+os.environ["TZ"] = "Europe/Vienna"
+time.tzset()
+
+def add_time(text):
+    return f"{time.strftime("%H:%M:%S")}: {text}"
 
 from collections import defaultdict
 
@@ -22,7 +28,7 @@ if sys.argv[1] == "standardized":
     print("Use data with z-normalization\n")
 elif sys.argv[1] == "normal":
     standardized = False
-    print("Use data without normalization\n")
+    print("Use data without z-normalization\n")
 else:
     print("Need to select `standardized` or `normal`!\n")
     exit()
@@ -50,8 +56,11 @@ else:
     ID_FN = lambda dataset: dataset.id
 
 
+pool = WorkerPool(n_jobs=N_JOBS, use_dill=True)
+
+
 for dataset in DATASETS:
-    print("Start", NAME_FN(dataset))
+    print(add_time(f"Start {NAME_FN(dataset)}"))
 
     X, l = LOAD_FN(dataset)
 
@@ -67,22 +76,34 @@ for dataset in DATASETS:
         X_ = X[shuffle_data_index]
         l_ = l[shuffle_data_index]
 
-        with WorkerPool(n_jobs=N_JOBS, use_dill=True) as pool:
+        async_results = {}
+        for metric_name, metric_fn in METRICS.items():
+            path = f"{RESULTS_PATH}{SAVE_FOLDER}/{ID_FN(dataset)}/{metric_name}_{run}.csv"
+            if os.path.exists(path):
+                print(add_time(f"Skipped - Dataset: {NAME_FN(dataset)}, Run: {run}, Metric: {metric_name}"))
+                continue
+            print(add_time(f"Calc - Dataset: {NAME_FN(dataset)}, Run: {run}, Metric: {metric_name}"))
+            async_results[metric_name] = pool.apply_async(
+                exec_metric, args=(X_, l_, metric_fn), task_timeout=TASK_TIMEOUT
+            )
 
-            async_results = {}
-            for metric_name, metric_fn in METRICS.items():
-                path = f"{RESULTS_PATH}{SAVE_FOLDER}/{ID_FN(dataset)}/{metric_name}_{run}.csv"
-                if os.path.exists(path):
-                    print(f"Skipped - Dataset: {NAME_FN(dataset)}, Run: {run}, Metric: {metric_name}")
+        while async_results:
+            time.sleep(10)
+            for metric_name in list(async_results.keys()):
+
+                if not async_results[metric_name].ready():
+                    print(add_time(f"Waiting for - Dataset: {NAME_FN(dataset)}, Run: {run}, Metric: {metric_name}"))
                     continue
-                print(f"Calc - Dataset: {NAME_FN(dataset)}, Run: {run}, Metric: {metric_name}")
-                async_results[metric_name] = pool.apply_async(
-                    exec_metric, args=(X_, l_, metric_fn), task_timeout=TASK_TIMEOUT
-                )
 
-            for metric_name in async_results.keys():
+                if not async_results[metric_name].successful():
+                    print(add_time(f"Failed - Dataset: {NAME_FN(dataset)}, Run: {run}, Metric: {metric_name}"))
+                    del async_results[metric_name]
+                    continue
+
                 value, real_time, cpu_time = async_results[metric_name].get()
-                print(f"Finished - Dataset: {NAME_FN(dataset)}, Run: {run}, Metric: {metric_name}")
+                del async_results[metric_name]
+
+                print(add_time(f"Finished - Dataset: {NAME_FN(dataset)}, Run: {run}, Metric: {metric_name}"))
                 eval_results = defaultdict(list)
                 insert_dict(
                     eval_results,
@@ -95,14 +116,15 @@ for dataset in DATASETS:
                         "process_time": cpu_time,
                     },
                 )
+                path = f"{RESULTS_PATH}{SAVE_FOLDER}/{ID_FN(dataset)}/{metric_name}_{run}.csv"
                 os.makedirs(os.path.dirname(path), exist_ok=True)
                 df = pd.DataFrame(data=eval_results)
                 df.to_csv(path, index=False)
 
-            gc.collect()
+    print(add_time(f"End {NAME_FN(dataset)}"))
 
-    print("End", NAME_FN(dataset))
-
+pool.stop_and_join()
+pool.terminate()
 
 print()
-print("Finished.")
+print(add_time("Finished."))

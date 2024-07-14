@@ -59,7 +59,7 @@ def exec_metric(X, l, metric_fn, args=[], kwargs={}):
     return value, end_time - start_time, end_process_time - start_process_time
 
 
-def calc_eval_measures(X, l, metrics=METRICS, name=None, runs=10, task_timeout=None):
+def calc_eval_measures(X, l, name=None, metrics=METRICS, runs=10, task_timeout=None):
     """Calculate all evaluation measures for a given dataset with data `X` and labels `l`."""
 
     with WorkerPool(n_jobs=48, use_dill=True) as pool:
@@ -116,7 +116,7 @@ def calc_eval_measures_for_multiple_datasets(
         for run in range(len(data[param_value])):
             X, l = data[param_value][run]
             eval_results = calc_eval_measures(
-                X, l, metrics=metrics, name=param_values[param_value], runs=1, task_timeout=task_timeout
+                X, l, name=param_values[param_value], metrics=metrics, runs=1, task_timeout=task_timeout
             )
             merge_dicts(eval_results_all, eval_results)
     return eval_results_all

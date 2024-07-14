@@ -95,38 +95,38 @@ def load_original_dataset(dataset_id):
         case Datasets.Synth_high:
             return load_syn(f"{DATASETS_FOLDER}/high_data_100.npy")
         case Datasets.HAR:
-            return load_har()
+            return load_har(return_X_y=True)
         case Datasets.letterrec:
-            return load_letterrecognition()
+            return load_letterrecognition(return_X_y=True)
         case Datasets.htru2:
-            return load_htru2()
+            return load_htru2(return_X_y=True)
         case Datasets.Mice:
-            return load_mice_protein()
+            return load_mice_protein(return_X_y=True)
         case Datasets.Pendigits:
-            return load_pendigits()
+            return load_pendigits(return_X_y=True)
         # Video data
         case Datasets.Weizmann:
-            return video_labels(*load_video_weizmann(normalize_channels=True))
+            return video_labels(*load_video_weizmann(return_X_y=True))
         case Datasets.Keck:
-            return video_labels(*load_video_keck_gesture(normalize_channels=True))
+            return video_labels(*load_video_keck_gesture(return_X_y=True))
         # Image data
         case Datasets.COIL20:
-            return load_coil20()
+            return load_coil20(return_X_y=True)
         case Datasets.COIL100:
-            return load_coil100(normalize_channels=True)
+            return load_coil100(return_X_y=True)
         case Datasets.cmu_faces:
-            return apply_label(*load_cmu_faces(), 0)
+            return apply_label(*load_cmu_faces(return_X_y=True), 0)
         # MNIST data
         case Datasets.Optdigits:
-            return load_optdigits()
+            return load_optdigits(return_X_y=True)
         case Datasets.USPS:
-            return load_usps(normalize_channels=True)
+            return load_usps(return_X_y=True)
         case Datasets.MNIST:
-            return load_mnist(normalize_channels=True)
+            return load_mnist(return_X_y=True)
         case Datasets.FMNIST:
-            return load_fmnist(normalize_channels=True)
+            return load_fmnist(return_X_y=True)
         case Datasets.KMNIST:
-            return load_kmnist(normalize_channels=True)
+            return load_kmnist(return_X_y=True)
         case _:
             raise AttributeError
 

@@ -48,7 +48,10 @@ def plot_lineplot(
 ):
     """Plot a line plot for a dataframe."""
 
-    plt.figure(figsize=figsize)
+    fig = plt.figure(
+        figsize=figsize,
+        layout="tight",
+    )
     highlight -= 1
 
     if order is None:
@@ -112,7 +115,7 @@ def plot_lineplot(
     frame.set_facecolor("white")
     frame.set_edgecolor("black")
 
-    plt.tight_layout()
+    return fig
 
 
 def plot_barplot(
@@ -128,7 +131,10 @@ def plot_barplot(
 ):
     """Plot a barplot for a dataframe."""
 
-    plt.figure(figsize=figsize)
+    fig = plt.figure(
+        figsize=figsize,
+        layout="tight",
+    )
     sns.set_theme(style="whitegrid", palette="bright")
 
     ax = sns.barplot(
@@ -153,5 +159,5 @@ def plot_barplot(
     # ax.spines["right"].set_color("white")
     # ax.spines["top"].set_color("white")
 
-    plt.tight_layout()
     sns.reset_orig()
+    return fig
