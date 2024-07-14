@@ -7,6 +7,7 @@ sys.path.append(parent_folder)
 
 
 from src.Evaluation.DISCO.disco import disco_score as DISCO
+from src.Evaluation.DISCO.disco import noise_eval as noise_eval
 from src.Evaluation.DC_DUNN.dc_dunn import dc_dunn_score as DC_DUNN
 
 # Competitors
@@ -63,10 +64,13 @@ SELECTED_METRICS = [
 ]
 
 
-def create_and_filter_df(eval_results, selected_metrics=SELECTED_METRICS, sort=False):
+def create_and_filter_df(eval_results, selected_metrics=SELECTED_METRICS, excluded_metrics=None, sort=False):
     df = pd.DataFrame(data=eval_results)
-    df = df[df.measure.isin(selected_metrics)]
+    if selected_metrics:
+        df = df[df.measure.isin(selected_metrics)]
+    if excluded_metrics:
+        df = df[~df.measure.isin(excluded_metrics)]
     if sort:
         df["measure"] = pd.Categorical(df["measure"], selected_metrics)
-        df = df.sort_values("measure")
+        df = df.sort_values(["dataset", "measure", "run"])
     return df

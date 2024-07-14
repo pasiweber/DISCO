@@ -15,6 +15,7 @@
 from itertools import combinations
 from typing import Tuple
 
+import numpy as np
 import torch
 from torch import Tensor
 
@@ -80,6 +81,9 @@ def dunn_score(data, labels, p: float = 2):
         tensor(2.)
 
     """
+    data = np.array(data, dtype=np.float64)
+    labels = np.array(labels, dtype=int)
+
     data = torch.from_numpy(data)
     labels = torch.from_numpy(labels)
     pairwise_distance, max_distance = _dunn_index_update(data, labels, p)

@@ -10,6 +10,7 @@ from src.Evaluation.dcdistances.dctree import DCTree
 
 def disco_score(X, labels, min_points = 5):
     dc_distances = DCTree(X, min_points=min_points, no_fastindex=False).dc_distances()
+    labels = np.reshape(labels, len(labels))
     silhouette_dc_values = silhouette_samples(
         dc_distances[np.ix_(labels != -1, labels != -1)],
         labels[labels != -1],
