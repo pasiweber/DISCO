@@ -46,6 +46,15 @@ def relative_density(Den):
     return Rel
 
 
+def _nD(Den):
+    n = len(Den)
+    nD = np.zeros((n, n))
+    for i in range(n):
+        for j in range(n):
+            nD[i, j] = Den[i] + Den[j]
+    return nD
+
+
 def connectivity_distance(drD):
     ## Equation 8
     conD = DCTree(drD, min_points=1, precomputed=True).dc_distances()
@@ -57,7 +66,7 @@ def dr_distance(d, RelD):
     drD = np.zeros((n, n))
     for i in range(n):
         for j in range(n):
-            drD[i, j] = d[i, j] + RelD[i]
+            drD[i, j] = d[i, j] + RelD[i, j]
     return drD
 
 
@@ -82,7 +91,7 @@ def density_involved_dist(d, k):
     Rel = relative_density(Den)
     fRel = mutual_density_factor(Rel)
     # nd is a reference
-    nD = np.tile(Den, (1, n)) + np.tile(Den.T, (n, 1))
+    nD = _nD(Den)
     relD = rel_D(fRel, nD)
     drD = dr_distance(d, relD)
     conD = connectivity_distance(drD)
@@ -98,6 +107,7 @@ def path_distance(d):
     pD = DCTree(d, min_points=1, precomputed=True).dc_distances()
     return pD
 
+
 def KNearestNeighborGraph(d, k):
     N = len(d)
     KNNG = [[] for _ in range(N)]
@@ -108,7 +118,6 @@ def KNearestNeighborGraph(d, k):
         indices = np.argsort(dists)
         KNNG[i] = list(indices[:k])
     return KNNG
-
 
 
 def CVDD(sep, com):
@@ -124,7 +133,7 @@ def cvdd_score(data, labels, num_of_neighbors=7):
 
     sep = np.zeros(num_cluster)
     com = np.zeros(num_cluster)
-    i =0
+    i = 0
     for label in unique_labels:
         if label == -1:
             continue
@@ -138,12 +147,20 @@ def cvdd_score(data, labels, num_of_neighbors=7):
             sep[i] = np.min(DD2)
 
             d1 = np.take(d, a, axis=0)
-            d2 = np.take(d1, b, axis=1)
+            d2 = np.take(d1, a, axis=1)
             pD_i = path_distance(d2)
-            print(pD_i)
-            mean_i = np.sum(pD_i)* (1/n)
-            temp1 = (1/(n-1))*sum([ dist- mean_i for dist in pD_i])
-            std_i = np.sqrt(temp1)
-            com[i] = 1/n * std_i * mean_i
-            i= i+1
-    return CVDD(sep, com)
+            mean_i = np.mean(pD_i)
+
+            d_2 = abs(pD_i - mean_i) ** 2
+            var = d_2.sum() / (n - 1)
+            std_i = var ** 0.5
+
+            com[i] = (1 / n) * std_i * mean_i
+            print('Sep and com from i {}'.format(i))
+            print(sep[i])
+            print(com[i])
+            i = i + 1
+
+    score = CVDD(sep, com)
+    print('CVDD score: {}'.format(score))
+    return score
