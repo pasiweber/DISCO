@@ -116,7 +116,7 @@ def CVDD(sep, com):
     return np.sum(sep) / np.sum(com)
 
 
-def cvdd_score(data, labels, num_of_neighbors):
+def cvdd_score(data, labels, num_of_neighbors=7):
     unique_labels = np.unique(labels)
     num_cluster = len(unique_labels)
     d = squareform(pdist(data, metric='minkowski', p=2))
