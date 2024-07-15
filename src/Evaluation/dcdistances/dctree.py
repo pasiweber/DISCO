@@ -155,6 +155,7 @@ class DCTree:
         no_fastindex: bool = False,
         use_less_memory: bool = False,
         n_jobs: Optional[int] = None,
+        precomputed = False,
     ):
         self.n = points.shape[0]
         self.min_points = min_points
@@ -169,12 +170,15 @@ class DCTree:
             self.n_jobs = n_jobs
         self.no_gil = sys.flags.nogil if hasattr(sys.flags, "nogil") else False
 
-        if use_less_memory:
+        if use_less_memory and not precomputed:
             mst_edges = self._get_mst_edges(points, use_less_memory=True)
         else:
-            reach_dists = calculate_reachability_distance(points, min_points)
+            if not precomputed:
+                reach_dists = calculate_reachability_distance(points, min_points)
+            else: reach_dists = points
             mst_edges = self._get_mst_edges(reach_dists)
-            del reach_dists
+            if not precomputed:
+                del reach_dists
         mst_edges.sort(order="dist")
         self.root = self._build_tree(mst_edges)
         del mst_edges
