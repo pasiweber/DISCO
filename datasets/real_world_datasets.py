@@ -48,10 +48,12 @@ class Datasets(AbstractDatasets):
             # Tabular data
             case Datasets.Synth_low:
                 path = f"{DATASETS_FOLDER}/low_data_100.npy"
-                return np.hsplit(np.load(path), [-1])
+                X, l = np.hsplit(np.load(path), [-1])
+                return X, l.reshape(-1)
             case Datasets.Synth_high:
                 path = f"{DATASETS_FOLDER}/high_data_100.npy"
-                return np.hsplit(np.load(path), [-1])
+                X, l = np.hsplit(np.load(path), [-1])
+                return X, l.reshape(-1)
             case Datasets.HAR:
                 return load_har(return_X_y=True)
             case Datasets.letterrec:

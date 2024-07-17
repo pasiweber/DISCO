@@ -15,7 +15,7 @@ from src.Evaluation.DBCV.dbcv import dbcv_score as DBCV
 from src.Evaluation.DCSI.dcsi import dcsi_score as DCSI
 from src.Evaluation.S_Dbw.sdbw import sdbw_score as S_DBW
 from src.Evaluation.CDBW.cdbw import cdbw_score as CDBW
-from src.Evaluation.CVDD.cvdd import cvdd_score as CVDD
+from src.Evaluation.CVDD.cvdd_new import cvdd_score as CVDD
 from src.Evaluation.CVNN.cvnn import cvnn_score as CVNN
 from src.Evaluation.DSI.dsi import dsi_score as DSI
 
@@ -52,8 +52,8 @@ SELECTED_METRICS = [
     "DBCV",
     "DCSI",
     # "S_DBW",
-    "CDBW",
-    "CVDD",
+    # "CDBW",
+    # "CVDD",
     # "CVNN",
     "DSI",
     ### Gauss
@@ -62,9 +62,33 @@ SELECTED_METRICS = [
     # "DB",
     # "CH",
 ]
+# ["DISCO", "DBCV", "DCSI", "S_DBW", "DSI", "SILHOUETTE", "DUNN"]
+
+RESCALED_METRICS = [
+    # "DISCO",
+    "DC_DUNN",
+    ### Competitors
+    # "DBCV",
+    # "DCSI",
+    "S_DBW",
+    "CDBW",
+    "CVDD",
+    "CVNN",
+    # "DSI",
+    ### Gauss
+    # "SILHOUETTE",
+    "DUNN",
+    "DB",
+    "CH",
+]
 
 
-def create_and_filter_df(eval_results, selected_metrics=SELECTED_METRICS, excluded_metrics=None, sort=False):
+def create_and_filter_df(
+    eval_results,
+    selected_metrics=SELECTED_METRICS,
+    excluded_metrics=[],
+    sort=False,
+):
     df = pd.DataFrame(data=eval_results)
     if selected_metrics:
         df = df[df.measure.isin(selected_metrics)]
@@ -73,4 +97,37 @@ def create_and_filter_df(eval_results, selected_metrics=SELECTED_METRICS, exclud
     if sort:
         df["measure"] = pd.Categorical(df["measure"], selected_metrics)
         df = df.sort_values(["dataset", "measure", "run"])
+    return df
+
+
+def rescale_measures(df, metrics):
+    df = df.copy()
+    values = df[df.measure.isin(metrics)].groupby(["measure"])["value"]
+    df.loc[df.measure.isin(metrics), "value"] = values.transform(
+        lambda x: (x - x.min()) / (x.max() - x.min())
+    )
+    return df
+
+
+def create_and_rescale_df(
+    eval_results,
+    selected_metrics=SELECTED_METRICS,
+    excluded_metrics=[],
+    rescale_metrics=RESCALED_METRICS,
+    sort=False,
+):
+    df = create_and_filter_df(
+        eval_results,
+        selected_metrics=selected_metrics,
+        excluded_metrics=excluded_metrics + rescale_metrics,
+        sort=sort,
+    )
+    df_ = create_and_filter_df(
+        eval_results,
+        selected_metrics=rescale_metrics,
+        excluded_metrics=excluded_metrics,
+        sort=sort,
+    )
+    df_ = rescale_measures(df_, rescale_metrics)
+    df = pd.concat((df, df_))
     return df

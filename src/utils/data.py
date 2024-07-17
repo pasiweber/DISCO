@@ -2,6 +2,24 @@ import numpy as np
 from sklearn.neighbors import NearestNeighbors
 
 
+def convert_to_numpy(datasets):
+    datasets_np = np.empty((len(datasets), len(datasets[0]), 2), dtype=object)
+    datasets_np[:] = datasets
+    return datasets_np
+
+
+def sample_datasets(datasets, func):
+    datasets = convert_to_numpy(datasets)
+
+    def apply_to_sample(data):
+        new_data = np.empty(2, dtype=object)
+        data = func(data[0], data[1])
+        new_data[:] = data
+        return new_data
+
+    return np.apply_along_axis(lambda data: apply_to_sample(data), 2, datasets)
+
+
 def add_noise(X, l, n_noise, eps):
     """Add noise to data with at least eps distance to the data."""
 

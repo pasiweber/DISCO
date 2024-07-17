@@ -156,11 +156,11 @@ def cvdd_score(data, labels, num_of_neighbors=7):
             std_i = var ** 0.5
 
             com[i] = (1 / n) * std_i * mean_i
-            print('Sep and com from i {}'.format(i))
-            print(sep[i])
-            print(com[i])
+            # print('Sep and com from i {}'.format(i))
+            # print(sep[i])
+            # print(com[i])
             i = i + 1
 
     score = CVDD(sep, com)
-    print('CVDD score: {}'.format(score))
+    # print('CVDD score: {}'.format(score))
     return score

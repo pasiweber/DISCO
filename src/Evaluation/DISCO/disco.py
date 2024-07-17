@@ -50,7 +50,7 @@ def noise_eval(X, labels, min_points=5, dc_distances=None):
         )
         noise_dc = np.minimum(noise_dc, noise_dc_i)
 
-    return (noise_core_prop + noise_dc) / 2
+    return np.minimum(noise_core_prop, noise_dc)
 
 
 def silhouette_score(

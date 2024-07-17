@@ -20,10 +20,11 @@ from src.utils.experiments import insert_dict, exec_metric
 
 RESULTS_PATH = f"{DISCO_ROOT_PATH}/results/"
 TASK_TIMEOUT = 24 * 60 * 60  # 24 hours
-N_JOBS = 10  # 32
+N_JOBS = 20  # 32
 RUNS = 1
 
 # del ALL_METRICS["CDBW"]
+# del ALL_METRICS["CVDD"]
 METRICS = ALL_METRICS
 
 
@@ -31,18 +32,18 @@ if sys.argv[1] == "normal":
     print("Use data without z-normalization\n")
     config = {
         "save_folder": "real_world",
-        "datasets": [dataset.name for dataset in RealWorldDatasets.get_experiments_list()],
-        "id_dict": {dataset.name: dataset.id for dataset in RealWorldDatasets.get_experiments_list()},
-        "load_fn_dict": {dataset.name: lambda: dataset.data_cached for dataset in RealWorldDatasets.get_experiments_list()},
+        "dataset_names": [dataset.name for dataset in RealWorldDatasets.get_experiments_list()],
+        "dataset_id_dict": {dataset.name: dataset.id for dataset in RealWorldDatasets.get_experiments_list()},
+        "dataset_load_fn_dict": {dataset.name: lambda dataset=dataset: dataset.data_cached for dataset in RealWorldDatasets.get_experiments_list()},
         "metrics": METRICS,
     }
 elif sys.argv[1] == "standardized":
     print("Use data with z-normalization\n")
     config = {
         "save_folder": "real_world_standardized",
-        "datasets": [dataset.name for dataset in RealWorldDatasets.get_experiments_list()],
-        "id_dict": {dataset.name: dataset.id for dataset in RealWorldDatasets.get_experiments_list()},
-        "load_fn_dict": {dataset.name: lambda: dataset.standardized_data_cached for dataset in RealWorldDatasets.get_experiments_list()},
+        "dataset_names": [dataset.name for dataset in RealWorldDatasets.get_experiments_list()],
+        "dataset_id_dict": {dataset.name: dataset.id for dataset in RealWorldDatasets.get_experiments_list()},
+        "dataset_load_fn_dict": {dataset.name: lambda dataset=dataset: dataset.standardized_data_cached for dataset in RealWorldDatasets.get_experiments_list()},
         "metrics": METRICS,
     }
 else:
@@ -50,57 +51,68 @@ else:
     exit()
 
 
-def run(save_folder, datasets, id_dict, load_fn_dict, metrics):
-    pool = WorkerPool(n_jobs=N_JOBS, use_dill=True)
-    async_results = {}
 
-    for dataset in datasets:
-        X, l = load_fn_dict[dataset]()
+def exec_metric_(shared_objects, dataset_name, run, metric_name):
+    datasets, metrics = shared_objects
+    return exec_metric(datasets[(dataset_name, run)], metrics[metric_name])
+
+def run(save_folder, dataset_names, dataset_id_dict, dataset_load_fn_dict, metrics):
+    datasets = {}
+    for dataset_name in dataset_names:
+        X, l = dataset_load_fn_dict[dataset_name]()
         X = X[l != -1]
         l = l[l != -1]
-
         np.random.seed(0)
         seeds = np.random.choice(10_000, size=RUNS, replace=False)
-        for run in tqdm(range(len(seeds))):
+        for run in range(RUNS):
             np.random.seed(seeds[run])
             shuffle_data_index = np.random.choice(len(X), size=len(X), replace=False)
             X_ = X[shuffle_data_index]
             l_ = l[shuffle_data_index]
+            datasets[(dataset_name, run)] = (X_, l_)
 
-            for metric_name, metric_fn in metrics.items():
-                path = f"{RESULTS_PATH}{save_folder}/{id_dict[dataset]}/{metric_name}_{run}.csv"
+    async_results = {}
+    pool = WorkerPool(n_jobs=N_JOBS, use_dill=True, shared_objects=(datasets, metrics))
+    for dataset_name in dataset_names:
+        for run in range(RUNS):
+            for metric_name in metrics:
+                path = f"{RESULTS_PATH}{save_folder}/{dataset_id_dict[dataset_name]}/{metric_name}_{run}.csv"
                 if os.path.exists(path):
-                    print(add_time(f"Skipped - Dataset: {dataset}, Run: {run}, Metric: {metric_name}"))
+                    print(add_time(f"Skipped - Dataset: {dataset_name}, Run: {run}, Metric: {metric_name}"))
                     continue
-                print(add_time(f"Calc - Dataset: {dataset}, Run: {run}, Metric: {metric_name}"))
-                async_idx = (dataset, run, metric_name)
+                print(add_time(f"Calc - Dataset: {dataset_name}, Run: {run}, Metric: {metric_name}"))
+                async_idx = (dataset_name, run, metric_name)
                 async_results[async_idx] = pool.apply_async(
-                    exec_metric, args=(X_, l_, metric_fn), task_timeout=TASK_TIMEOUT
+                    exec_metric_, args=(dataset_name, run, metric_name), task_timeout=TASK_TIMEOUT
                 )
 
     while async_results:
+        print(add_time("-----"))
         time.sleep(10)
+        current_tasks = 0
         for async_idx, async_result in list(async_results.items()):
-            dataset, run, metric_name = async_idx
+            dataset_name, run, metric_name = async_idx
 
             if not async_result.ready():
-                print(add_time(f"Waiting for - Dataset: {dataset}, Run: {run}, Metric: {metric_name}"))
+                current_tasks += 1
+                if current_tasks <= N_JOBS:
+                    print(add_time(f"Calculating - Dataset: {dataset_name}, Run: {run}, Metric: {metric_name}"))
                 continue
 
             if not async_result.successful():
-                print(add_time(f"Failed - Dataset: {dataset}, Run: {run}, Metric: {metric_name}"))
+                print(add_time(f"Failed - Dataset: {dataset_name}, Run: {run}, Metric: {metric_name}"))
                 del async_results[async_idx]
                 continue
 
             value, real_time, cpu_time = async_result.get()
             del async_results[async_idx]
 
-            print(add_time(f"Finished - Dataset: {dataset}, Run: {run}, Metric: {metric_name}"))
+            print(add_time(f"Finished - Dataset: {dataset_name}, Run: {run}, Metric: {metric_name}"))
             eval_results = defaultdict(list)
             insert_dict(
                 eval_results,
                 {
-                    "dataset": dataset,
+                    "dataset": dataset_name,
                     "measure": metric_name,
                     "run": run,
                     "value": value,
@@ -108,11 +120,12 @@ def run(save_folder, datasets, id_dict, load_fn_dict, metrics):
                     "process_time": cpu_time,
                 },
             )
-            path = f"{RESULTS_PATH}{save_folder}/{id_dict[dataset]}/{metric_name}_{run}.csv"
+            path = f"{RESULTS_PATH}{save_folder}/{dataset_id_dict[dataset_name]}/{metric_name}_{run}.csv"
             os.makedirs(os.path.dirname(path), exist_ok=True)
             df = pd.DataFrame(data=eval_results)
             df.to_csv(path, index=False)
 
+    print(add_time("-----"))
     pool.stop_and_join()
     pool.terminate()
 

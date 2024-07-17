@@ -30,12 +30,6 @@ def cache(filename, func, args=[], kwargs={}, recalc=False):
         return result
 
 
-def convert_to_numpy(datasets):
-    datasets_np = np.empty((len(datasets), len(datasets[0])), dtype=object)
-    datasets_np[:] = datasets
-    return datasets_np
-
-
 def insert_dict(dict, key_value_dict):
     for key, value in key_value_dict.items():
         dict[key].append(value)
@@ -46,12 +40,12 @@ def merge_dicts(dict1, dict2):
         dict1[key] += value
 
 
-def exec_metric(X, l, metric_fn, args=[], kwargs={}):
+def exec_metric(data, metric_fn, args=[], kwargs={}):
     """Calculate evaluation measures for given metric function and given dataset with data `X` and labels `l`."""
 
     start_time = time.time()
     start_process_time = time.process_time()
-    value = metric_fn(X, l, *args, **kwargs)
+    value = metric_fn(*data, *args, **kwargs)
     end_process_time = time.process_time()
     end_time = time.time()
     return value, end_time - start_time, end_process_time - start_process_time
@@ -75,7 +69,7 @@ def calc_eval_measures(X, l, name=None, metrics=METRICS, runs=10, n_jobs=32, tas
         for metric_name, metric_fn in metrics.items():
             async_idx = (run, metric_name)
             async_results[async_idx] = pool.apply_async(
-                exec_metric, args=(X_, l_, metric_fn), task_timeout=task_timeout
+                exec_metric, args=((X_, l_), metric_fn), task_timeout=task_timeout
             )
 
     eval_results = defaultdict(list)
@@ -118,7 +112,7 @@ def calc_eval_measures_for_multiple_datasets(
             for metric_name, metric_fn in metrics.items():
                 async_idx = (param_value, run, metric_name)
                 async_results[async_idx] = pool.apply_async(
-                    exec_metric, args=(X, l, metric_fn), task_timeout=task_timeout
+                    exec_metric, args=((X, l), metric_fn), task_timeout=task_timeout
                 )
 
     eval_results = defaultdict(list)

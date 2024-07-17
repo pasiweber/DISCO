@@ -1,10 +1,12 @@
 import numpy as np
+import math
 import matplotlib.pyplot as plt
 import matplotlib.gridspec as gridspec
 import seaborn as sns
+from src.utils.metrics import RESCALED_METRICS
 
 
-def plot_datasets(data, param_values, rows=5, cols=5, figsize=2.0):
+def plot_datasets(data, param_values, n_rows=None, n_cols=None, figsize=2.0):
     """Plots all datasets in data with corresponding param_value as title.
     `fig_x` columns and `fig_y` rows.
 
@@ -13,18 +15,25 @@ def plot_datasets(data, param_values, rows=5, cols=5, figsize=2.0):
         param_values: 1d matrix with parameter values per dataset. Used for title.
     """
 
+    if n_rows is None and n_cols is None:
+        n_rows = n_cols = int(math.sqrt(len(data) - 1) + 1)
+    if n_rows is None:
+        n_rows = (len(data) - 1) // n_cols + 1
+    if n_cols is None:
+        n_cols = (len(data) - 1) // n_rows + 1
+
     fig = plt.figure(
-        figsize=(figsize * cols, (figsize + 0.2) * rows),
+        figsize=(figsize * n_cols, (figsize + 0.2) * n_rows),
         layout="tight",
     )
-    G = gridspec.GridSpec(rows, cols)
+    G = gridspec.GridSpec(n_rows, n_cols)
 
-    length = min(len(data), len(param_values), cols * rows)
+    length = min(len(data), len(param_values), n_cols * n_rows)
     data = data[:length]
     param_values = param_values[:length]
 
     for param_value in range(0, len(data)):
-        ax = plt.subplot(G[param_value // cols, param_value % cols])
+        ax = plt.subplot(G[param_value // n_cols, param_value % n_cols])
         ax.set_xticks([])
         ax.set_yticks([])
         ax.set_title(f"{param_values[param_value]}")
@@ -42,9 +51,11 @@ def plot_lineplot(
     order=None,
     x_range=(None, None),
     y_range=(None, None),
-    figsize=(15, 5),
+    # figsize=(15, 5),
+    figsize=(9, 4),
     errorbar="se",
     highlight=1,
+    red_legend_lables=RESCALED_METRICS,
 ):
     """Plot a line plot for a dataframe."""
 
@@ -111,6 +122,10 @@ def plot_lineplot(
         # fontsize=19,
         # ncol=4,
     )
+    for text in leg.get_texts():
+        if text.get_text() in red_legend_lables:
+            text.set_color("red")
+
     frame = leg.get_frame()
     frame.set_facecolor("white")
     frame.set_edgecolor("black")
