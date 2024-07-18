@@ -88,7 +88,9 @@ def density_involved_dist(d, k):
     Den = density_estimation(d, KNNG, k)
     # Normalize towards maximum Den_i
     fDen = outlier_factor(Den)
+    # this is where the exception might be thrown
     Rel = relative_density(Den)
+
     fRel = mutual_density_factor(Rel)
     # nd is a reference
     nD = _nD(Den)
@@ -129,7 +131,11 @@ def cvdd_score(data, labels, num_of_neighbors=7):
     unique_labels = np.unique(labels)
     num_cluster = len(unique_labels)
     d = squareform(pdist(data, metric='minkowski', p=2))
-    DD = density_involved_dist(d, num_of_neighbors)
+    try:
+        DD = density_involved_dist(d, num_of_neighbors)
+    except ZeroDivisionError:
+        return 0
+
 
     sep = np.zeros(num_cluster)
     com = np.zeros(num_cluster)
