@@ -4,8 +4,10 @@ from scipy.spatial.distance import cdist
 # changed imports
 from hdbscan._hdbscan_linkage import mst_linkage_core
 from hdbscan.hdbscan_ import isclose
-#from hdbscan.hdbscan_ import isclose, kruskal_mst_with_mutual_reachability
+# from hdbscan.hdbscan_ import isclose, kruskal_mst_with_mutual_reachability
 from scipy.sparse.csgraph import minimum_spanning_tree
+
+
 def all_points_core_distance(distance_matrix, d=2.0):
     """
     Compute the all-points-core-distance for all the points of a cluster.
@@ -48,16 +50,16 @@ def max_ratio(stacked_distances):
         for j in range(stacked_distances.shape[1]):
             dist = stacked_distances[i][j][0]
             coredist = stacked_distances[i][j][1]
-            if dist == 0 or coredist/dist <= max_ratio:
+            if dist == 0 or coredist / dist <= max_ratio:
                 continue
-            max_ratio = coredist/dist
+            max_ratio = coredist / dist
 
     return max_ratio
 
 
 def distances_between_points(X, labels, cluster_id,
-                                    metric='euclidean', d=None, no_coredist=False,
-                                    print_max_raw_to_coredist_ratio=False, **kwd_args):
+                             metric='euclidean', d=None, no_coredist=False,
+                             print_max_raw_to_coredist_ratio=False, **kwd_args):
     """
     Compute pairwise distances for all the points of a cluster.
 
@@ -167,7 +169,6 @@ def internal_minimum_spanning_tree(mr_distances, algorithm):
     Moulavi, D., Jaskowiak, P.A., Campello, R.J., Zimek, A. and Sander, J.,
     2014. Density-Based Clustering Validation. In SDM (pp. 839-847).
     """
-
 
     min_span_tree = None
 
@@ -306,7 +307,8 @@ def density_separation(X, labels, cluster_id1, cluster_id2,
 
 
 def dbcv_score(X, labels, metric='euclidean',
-                    d=None, per_cluster_scores=False, mst_raw_dist=False, verbose=False, algorithm='prim_official',  **kwd_args):
+               d=None, per_cluster_scores=False, mst_raw_dist=False, verbose=False, algorithm='prim_official',
+               **kwd_args):
     """
     Compute the density based cluster validity index for the
     clustering specified by `labels` and for each cluster in `labels`.
@@ -378,7 +380,7 @@ def dbcv_score(X, labels, metric='euclidean',
 
     clusters = np.setdiff1d(cluster_labels, -1)
     if len(clusters) == 0 or len(clusters) == 1:
-        return 0,0
+        return 0, 0
     O = X.shape[0]
     X = X[labels != -1, :]
     labels = labels[labels != -1]
@@ -439,9 +441,6 @@ def dbcv_score(X, labels, metric='euclidean',
             )
             density_sep[j, i] = density_sep[i, j]
 
-
-
-
     n_samples = float(X.shape[0])
     n_samples = O
     result = 0
@@ -452,10 +451,12 @@ def dbcv_score(X, labels, metric='euclidean',
             continue
 
         min_density_sep = density_sep[i].min()
-        cluster_validity_indices[i] = (
-            (min_density_sep - density_sparseness[i]) /
-            max(min_density_sep, density_sparseness[i])
-        )
+        numerator = min_density_sep - density_sparseness[i]
+        # if numerator is zero we avoid division by zero
+        if float(numerator) is float(0):
+            cluster_validity_indices[i] = numerator
+        else:
+            cluster_validity_indices[i] = numerator / max(min_density_sep, density_sparseness[i])
 
         if verbose:
             print("Minimum density separation: " + str(min_density_sep))
@@ -465,16 +466,17 @@ def dbcv_score(X, labels, metric='euclidean',
         cluster_size = np.sum(labels == i)
         result += (cluster_size / n_samples) * cluster_validity_indices[i]
 
-    #if per_cluster_scores:
-    #    return result, cluster_validity_indices, internal_mst_per_cluster
-    #else:
-    #    return result, internal_mst_per_cluster
+        # if per_cluster_scores:
+        #    return result, cluster_validity_indices, internal_mst_per_cluster
+        # else:
+        #    return result, internal_mst_per_cluster
         return result
 
 
 def kruskal_mst_with_mutual_reachability(mutual_reachability):
     n_vertices = mutual_reachability.shape[0]
-    edges = [(i, j, mutual_reachability[i, j]) for i in range(n_vertices) for j in range(i + 1, n_vertices) if mutual_reachability[i, j] != np.inf]
+    edges = [(i, j, mutual_reachability[i, j]) for i in range(n_vertices) for j in range(i + 1, n_vertices) if
+             mutual_reachability[i, j] != np.inf]
     edges.sort(key=lambda x: x[2])
     parent = [i for i in range(n_vertices)]
     rank = [0 for _ in range(n_vertices)]
@@ -496,7 +498,6 @@ def kruskal_mst_with_mutual_reachability(mutual_reachability):
 
 
 def prim_mst_with_mutual_reachability(mutual_reachability):
-
     # Prims algorithm
     n_vertices = mutual_reachability.shape[0]
     G = {
@@ -512,10 +513,10 @@ def prim_mst_with_mutual_reachability(mutual_reachability):
     intree = []
     # initialize
     for i in range(G["no_vertices"]):
-            intree.append(0)
-            d.append(np.inf)
-            G["MST_parent"][i] = int(i)
-    start =0
+        intree.append(0)
+        d.append(np.inf)
+        G["MST_parent"][i] = int(i)
+    start = 0
     d[start] = 0
     all_nodes = [i for i in range(G["no_vertices"])]
     visited = []
@@ -523,49 +524,46 @@ def prim_mst_with_mutual_reachability(mutual_reachability):
     v = start
     counter = -1
     # count until we connected all nodes
-    while len(visited) != G["no_vertices"]-2:
-    #while len(visited) != 2:
-            counter = counter + 1
-            # we add v to the 'visited'
-            intree[v] = 1
-            # remove it from allnodes
-            all_nodes.remove(v)
-            # add to visited
-            visited = np.append(visited, [v])
+    while len(visited) != G["no_vertices"] - 2:
+        # while len(visited) != 2:
+        counter = counter + 1
+        # we add v to the 'visited'
+        intree[v] = 1
+        # remove it from allnodes
+        all_nodes.remove(v)
+        # add to visited
+        visited = np.append(visited, [v])
 
-            # we look only at edges that are outgoing vom visited vertices
-            edges = mutual_reachability[visited, :]
+        # we look only at edges that are outgoing vom visited vertices
+        edges = mutual_reachability[visited, :]
 
-            # edges going to already visited nodes are set to infinity
-            edges[:, visited] = np.inf
+        # edges going to already visited nodes are set to infinity
+        edges[:, visited] = np.inf
 
-            # we want to look at the smallest
-            min_index = np.where(edges == edges.min())
-            #print('Edges')
-            #print(edges)
-            #print('Min')
-            #print(edges.min())
-            #print('Min Index')
-            #print(min_index)
+        # we want to look at the smallest
+        min_index = np.where(edges == edges.min())
+        # print('Edges')
+        # print(edges)
+        # print('Min')
+        # print(edges.min())
+        # print('Min Index')
+        # print(min_index)
 
-
-            # we extract indices
-            parent, v = visited[min_index[0]], min_index[1]
-            parent = parent[0]
-            v = v[0]
-            if v in visited:
-                print('Something went wrong')
-            d[v] = edges.min()
-            G["MST_parent"][v] = int(parent)
-            G["MST_edges"][counter, :] = [
-                parent,
-                v,
-                mutual_reachability[parent, v],
-            ]
-            G["MST_degrees"][parent] = G["MST_degrees"][parent] + 1
-            G["MST_degrees"][v] = G["MST_degrees"][v] + 1
-
-
+        # we extract indices
+        parent, v = visited[min_index[0]], min_index[1]
+        parent = parent[0]
+        v = v[0]
+        if v in visited:
+            print('Something went wrong')
+        d[v] = edges.min()
+        G["MST_parent"][v] = int(parent)
+        G["MST_edges"][counter, :] = [
+            parent,
+            v,
+            mutual_reachability[parent, v],
+        ]
+        G["MST_degrees"][parent] = G["MST_degrees"][parent] + 1
+        G["MST_degrees"][v] = G["MST_degrees"][v] + 1
 
     # Format the MST for direct use in post-processing
     mst_formatted = np.zeros((len(G["MST_edges"]), 3))
@@ -587,28 +585,28 @@ def internal_minimal_spanning_tree_Prim(mrd):
     """
     # transform to array
     mrd = np.array(mrd)
-    intree = [0]*mrd.shape[0]
+    intree = [0] * mrd.shape[0]
     parent = {}
-    d = [np.inf]*mrd.shape[0]
+    d = [np.inf] * mrd.shape[0]
     # calculate minimal spanning tree and extract adjacency matrix
     mst_temp = np.zeros([mrd.shape[0], mrd.shape[1]])
     d[0] = 0
     vertex = 0
-    G = {"MST_edges": np.zeros((mrd.shape[0] - 1, 3)),}
+    G = {"MST_edges": np.zeros((mrd.shape[0] - 1, 3)), }
     counter = -1
-    while counter < mrd.shape[0]-2:
+    while counter < mrd.shape[0] - 2:
         intree[vertex] = 1
         dist = np.inf
         for neighbor in range(mrd.shape[0]):
-            if(vertex!= neighbor) & (intree[neighbor] == 0):
+            if (vertex != neighbor) & (intree[neighbor] == 0):
                 weight = mrd[vertex, neighbor]
-                if d[neighbor]> weight:
+                if d[neighbor] > weight:
                     d[neighbor] = weight
                     parent[str(neighbor)] = vertex
                 if dist > d[neighbor]:
                     dist = d[neighbor]
                     next_v = neighbor
-        counter = counter +1
+        counter = counter + 1
         outgoing = parent[str(next_v)]
         incoming = next_v
         mst_temp[outgoing, incoming] = mrd[outgoing, incoming]
@@ -631,18 +629,18 @@ def internal_minimal_spanning_tree_Prim(mrd):
         mst_temp[external_nodes] = 0
         mst_temp[:, external_nodes] = 0
     result = []
-    vertices = np.asarray(degrees>1).nonzero()[0]
+    vertices = np.asarray(degrees > 1).nonzero()[0]
     for i in range(len(mst_temp)):
-        for j in range(i+1,len(mst_temp[i])):
-            if mst_temp[i,j]!=0:
-                result.append([i, j, mst_temp[i,j]])
+        for j in range(i + 1, len(mst_temp[i])):
+            if mst_temp[i, j] != 0:
+                result.append([i, j, mst_temp[i, j]])
     mst_formatted = np.zeros((len(G["MST_edges"]), 3))
     for i, (u, v, w) in enumerate(G["MST_edges"]):
         mst_formatted[i] = [u, v, w]
     return mst_formatted
 
-def kruskal2_mst_with_mutual_reachability(mutual_reachability):
 
+def kruskal2_mst_with_mutual_reachability(mutual_reachability):
     # Prims algorithm
     n_vertices = mutual_reachability.shape[0]
     G = {
@@ -660,13 +658,13 @@ def kruskal2_mst_with_mutual_reachability(mutual_reachability):
     counter = 0
     for outgoing in range(mst.shape[0]):
         for incoming in range(mst.shape[1]):
-            if mst[outgoing, incoming]!=0:
+            if mst[outgoing, incoming] != 0:
                 G["MST_edges"][counter, :] = [
                     outgoing,
                     incoming,
                     mst[outgoing, incoming],
                 ]
-                counter = counter +1
+                counter = counter + 1
 
     # Format the MST for direct use in post-processing
     mst_formatted = np.zeros((len(G["MST_edges"]), 3))
@@ -674,10 +672,12 @@ def kruskal2_mst_with_mutual_reachability(mutual_reachability):
         mst_formatted[i] = [u, v, w]
     return mst_formatted
 
+
 def find(parent, i):
     if parent[i] == i:
         return i
     return find(parent, parent[i])
+
 
 def union(parent, rank, x, y):
     xroot = find(parent, x)
@@ -692,7 +692,7 @@ def union(parent, rank, x, y):
 
 
 def prims_mst_with_mutual_reachability(mutual_reachability):
-    #print('actually prims')
+    # print('actually prims')
     n_vertices = mutual_reachability.shape[0]
     visited = set([0])  # Start from vertex 0
     edge_queue = []
@@ -721,6 +721,8 @@ def prims_mst_with_mutual_reachability(mutual_reachability):
         mst_formatted[i] = [u, v, w]
 
     return mst_formatted
+
+
 import heapq
 
 
@@ -745,9 +747,7 @@ def matlab_prims_wrapper(mutual_reachability):
     return mst_edges
 
 
-
 def MST_Edges(G, start, G_edges_weights):
-
     # Prims algorithm
     d = []
     intree = []
@@ -788,7 +788,7 @@ def MST_Edges(G, start, G_edges_weights):
             G_edges_weights[outgoing, incoming],
         ]
         G["MST_degrees"][G["MST_parent"][next_v]] = (
-            G["MST_degrees"][G["MST_parent"][next_v]] + 1
+                G["MST_degrees"][G["MST_parent"][next_v]] + 1
         )
         G["MST_degrees"][next_v] = G["MST_degrees"][next_v] + 1
         v = next_v
