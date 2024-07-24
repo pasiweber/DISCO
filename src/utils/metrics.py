@@ -28,8 +28,8 @@ from sklearn.metrics import calinski_harabasz_score as CH
 
 METRICS = {
     "DISCO": lambda X, l: DISCO(X, l),  ## min_pts
-    "DC_DUNN": DC_DUNN,
-    # Competitors
+    # "DC_DUNN": DC_DUNN,
+    ### Competitors
     "DBCV": lambda X, l: DBCV(X, l),
     "DCSI": lambda X, l: DCSI(X, l),  ## min_pts
     "S_DBW": S_DBW,
@@ -37,11 +37,47 @@ METRICS = {
     "CVDD": CVDD,
     "CVNN": CVNN,  ## min_pts
     "DSI": DSI,
-    # Gauss
+    ### Gauss
     "SILHOUETTE": SILHOUETTE,
     "DUNN": DUNN,
     "DB": DB,
     "CH": CH,
+}
+
+METRIC_ABBREV = {
+    "DISCO": "DISCO",
+    # "DC_DUNN": "DC_DUNN",
+    ### Competitors
+    "DBCV": "DBCV",
+    "DCSI": "DCSI",
+    "S_DBW": "S_Dbw",
+    "CDBW": "CDbw",
+    "CVDD": "CVDD",
+    "CVNN": "CVNN",
+    "DSI": "DSI",
+    ### Gauss
+    "SILHOUETTE": "SILH.",
+    "DUNN": "DUNN",
+    "DB": "DB",
+    "CH": "CH",
+}
+
+METRIC_ABBREV_TABLES = {
+    "DISCO": r"DISCO ($\\uparrow$)",
+    # "DC_DUNN": r"DC_DUNN ($\\uparrow$)",
+    ### Competitors
+    "DBCV": r"DBCV ($\\uparrow$)",
+    "DCSI": r"DCSI ($\\uparrow$)",
+    "S_DBW": r"S_Dbw ($\\downarrow$)",
+    "CDBW": r"CDbw ($\\uparrow$)",
+    "CVDD": r"CVDD ($\\uparrow$)",
+    "CVNN": r"CVNN ($\\downarrow$)",
+    "DSI": r"DSI ($\\uparrow$)",
+    ### Gauss
+    "SILHOUETTE": r"SILH. ($\\uparrow$)",
+    "DUNN": r"DUNN ($\\uparrow$)",
+    "DB": r"DB ($\\uparrow$)",
+    "CH": r"CH ($\\uparrow$)",
 }
 
 
@@ -66,7 +102,7 @@ SELECTED_METRICS = [
 
 RESCALED_METRICS = [
     # "DISCO",
-    "DC_DUNN",
+    # "DC_DUNN",
     ### Competitors
     # "DBCV",
     # "DCSI",
@@ -77,9 +113,9 @@ RESCALED_METRICS = [
     # "DSI",
     ### Gauss
     # "SILHOUETTE",
-    "DUNN",
-    "DB",
-    "CH",
+    # "DUNN",
+    # "DB",
+    # "CH",
 ]
 
 

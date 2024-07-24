@@ -46,32 +46,32 @@ class Datasets(AbstractDatasets):
     def load_dataset(self):
         match self:
             # Tabular data
-            case Datasets.Synth_low:
+            case self.Synth_low:
                 path = f"{DATASETS_FOLDER}/low_data_100.npy"
                 X, l = np.hsplit(np.load(path), [-1])
                 return X, l.reshape(-1)
-            case Datasets.Synth_high:
+            case self.Synth_high:
                 path = f"{DATASETS_FOLDER}/high_data_100.npy"
                 X, l = np.hsplit(np.load(path), [-1])
                 return X, l.reshape(-1)
-            case Datasets.HAR:
+            case self.HAR:
                 return load_har(return_X_y=True)
-            case Datasets.letterrec:
+            case self.letterrec:
                 return load_letterrecognition(return_X_y=True)
-            case Datasets.htru2:
+            case self.htru2:
                 return load_htru2(return_X_y=True)
-            case Datasets.Mice:
+            case self.Mice:
                 return load_mice_protein(return_X_y=True)
-            case Datasets.Pendigits:
+            case self.Pendigits:
                 return load_pendigits(return_X_y=True)
             # Video data
-            case Datasets.Weizmann:
+            case self.Weizmann:
                 X, l = load_video_weizmann(return_X_y=True)
                 acts = l[:, 0]
                 persons = l[:, 1]
                 l = persons * len(np.unique(acts)) + acts
                 return X, l
-            case Datasets.Keck:
+            case self.Keck:
                 X, l = load_video_keck_gesture(return_X_y=True, image_size=(100, 100))
                 acts = l[:, 0] - 1
                 nr_of_acts = len(np.unique(acts)) - 1
@@ -80,24 +80,24 @@ class Datasets(AbstractDatasets):
                 l_new[acts != -1] = (persons * nr_of_acts)[acts != -1] + acts[acts != -1]
                 return X, l_new
             # Image data
-            case Datasets.COIL20:
+            case self.COIL20:
                 return load_coil20(return_X_y=True)
-            case Datasets.COIL100:
+            case self.COIL100:
                 return load_coil100(return_X_y=True)
-            case Datasets.cmu_faces:
+            case self.cmu_faces:
                 X, l = load_cmu_faces(return_X_y=True)
                 l = l[:, 0]
                 return X, l
             # MNIST data
-            case Datasets.Optdigits:
+            case self.Optdigits:
                 return load_optdigits(return_X_y=True)
-            case Datasets.USPS:
+            case self.USPS:
                 return load_usps(return_X_y=True)
-            case Datasets.MNIST:
+            case self.MNIST:
                 return load_mnist(return_X_y=True)
-            case Datasets.FMNIST:
+            case self.FMNIST:
                 return load_fmnist(return_X_y=True)
-            case Datasets.KMNIST:
+            case self.KMNIST:
                 return load_kmnist(return_X_y=True)
             case _:
                 raise AttributeError
@@ -106,29 +106,29 @@ class Datasets(AbstractDatasets):
         match self:
             case dataset if dataset in [
                 # Tabular data
-                Datasets.Synth_low,
-                Datasets.Synth_high,
-                Datasets.HAR,
-                Datasets.letterrec,
-                Datasets.htru2,
-                Datasets.Mice,
-                Datasets.Pendigits,
+                self.Synth_low,
+                self.Synth_high,
+                self.HAR,
+                self.letterrec,
+                self.htru2,
+                self.Mice,
+                self.Pendigits,
             ]:
                 return standardize(X, l, axis=0)
             case dataset if dataset in [
                 # Video data
-                Datasets.Weizmann,
-                Datasets.Keck,
+                self.Weizmann,
+                self.Keck,
                 # Image data
-                Datasets.COIL20,
-                Datasets.COIL100,
-                Datasets.cmu_faces,
+                self.COIL20,
+                self.COIL100,
+                self.cmu_faces,
                 # MNIST data
-                Datasets.Optdigits,
-                Datasets.USPS,
-                Datasets.MNIST,
-                Datasets.FMNIST,
-                Datasets.KMNIST,
+                self.Optdigits,
+                self.USPS,
+                self.MNIST,
+                self.FMNIST,
+                self.KMNIST,
             ]:
                 return standardize(X, l, axis=None)
             case _:

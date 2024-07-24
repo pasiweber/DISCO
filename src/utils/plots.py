@@ -3,10 +3,17 @@ import math
 import matplotlib.pyplot as plt
 import matplotlib.gridspec as gridspec
 import seaborn as sns
-from src.utils.metrics import RESCALED_METRICS
+from src.utils.metrics import RESCALED_METRICS, METRIC_ABBREV
 
 
-def plot_datasets(data, param_values, n_rows=None, n_cols=None, figsize=2.0):
+def plot_datasets(
+    data,
+    param_values,
+    n_rows=None,
+    n_cols=None,
+    figsize=2.0,
+    dpi=200,
+):
     """Plots all datasets in data with corresponding param_value as title.
     `fig_x` columns and `fig_y` rows.
 
@@ -24,6 +31,7 @@ def plot_datasets(data, param_values, n_rows=None, n_cols=None, figsize=2.0):
 
     fig = plt.figure(
         figsize=(figsize * n_cols, (figsize + 0.2) * n_rows),
+        dpi=dpi,
         layout="tight",
     )
     G = gridspec.GridSpec(n_rows, n_cols)
@@ -53,14 +61,17 @@ def plot_lineplot(
     y_range=(None, None),
     # figsize=(15, 5),
     figsize=(9, 4),
+    dpi=200,
     errorbar="se",
     highlight=1,
     red_legend_lables=RESCALED_METRICS,
+    metric_abbrev=METRIC_ABBREV,
 ):
     """Plot a line plot for a dataframe."""
 
     fig = plt.figure(
         figsize=figsize,
+        dpi=dpi,
         layout="tight",
     )
     highlight -= 1
@@ -125,6 +136,8 @@ def plot_lineplot(
     for text in leg.get_texts():
         if text.get_text() in red_legend_lables:
             text.set_color("red")
+        if text in metric_abbrev:
+            text.set_label(metric_abbrev[text])
 
     frame = leg.get_frame()
     frame.set_facecolor("white")
