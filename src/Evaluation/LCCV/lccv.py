@@ -87,8 +87,12 @@ def LORE(LN, rho, X, dist):
         # find point y with maximum density in LN i
         maxdens = 0
         max_index = 0
+        # print('LN i {}'.format(i))
+        # print(LN[i])
         # for each point j in Local neighbors of i
         for j in LN[i]:
+            # print('rho j {}'.format(j))
+            # print(rho[j])
             # if maxdens is smaller than local dens at j
             if maxdens < rho[j]:
                 # set new maxdens
@@ -115,10 +119,14 @@ def LORE(LN, rho, X, dist):
                     # if the representative from z is p and the representative from p is y
                     # then the representative from z is y ( z->p, p->y --> z->y)
                     rep[z] = [max_index]
+
+    #print(LN[316])
     # for each datapoint
     for i in range(N):
+        if len(rep[i]) == 0:
+            print(' Rep {} {}'.format(i, rep[i]))
         # if the representative of i ist i itself
-        if rep[i][0] == i:
+        if len(rep[i]) != 0 and rep[i][0] == i:
             # the i is local core
             local_cores.append(i)
     return local_cores, rep
@@ -148,7 +156,7 @@ def lccv_score(X, labels):
     conn = conn * np.inf
     ## for every point in the dataset
     for i in range(N):
-    # if j is one of the nearest neighbors we set the weight to euclidean distance between i and j
+        # if j is one of the nearest neighbors we set the weight to euclidean distance between i and j
         for j in LN[i]:
             conn[i, j] = dist[i, j]
 
@@ -160,7 +168,6 @@ def lccv_score(X, labels):
     if np.isinf(uniques[-1]):
         max = np.unique(dist_matrix)[-2]
         dist_matrix[dist_matrix > max] = max
-
 
     # local cores dict mapping clusterlabel to corresponding local cores
     local_cores_in = {key: [] for key in np.unique(labels)}
