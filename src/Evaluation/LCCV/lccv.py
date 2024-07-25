@@ -120,7 +120,7 @@ def LORE(LN, rho, X, dist):
                     # then the representative from z is y ( z->p, p->y --> z->y)
                     rep[z] = [max_index]
 
-    #print(LN[316])
+    # print(LN[316])
     # for each datapoint
     for i in range(N):
         # if the representative of i ist i itself
@@ -181,34 +181,36 @@ def lccv_score(X, labels):
     for i in local_cores:
         # get cluster for i (A)
         label = labels[i]
-        # get all local cores belonging to the same cluster
-        local_core_in_A = local_cores_in[label]
-        # get number of local cores in cluster A
-        n_l_A = len(local_core_in_A)
-        # if there is only one local core in the cluster
-        if n_l_A == 1:
-            lccv_sum += 0
-        else:
-            # distances between i and every local core also belonging to the same cluster
-            dists = [dist_matrix[i, j] for j in local_core_in_A]
-            # a is defined in section D LCCV Index
-            a_i = (1 / (n_l_A - 1)) * np.sum(dists)
-            # distances between i and local points form other clusters cluster wise
-            cluster_wise_dists = []
-            # for each label that is not A
-            for l in np.unique(labels):
-                if l != label:
-                    # include local core averaged distance to i
-                    dists = [dist_matrix[i, j] for j in local_cores_in[l]]
-                    cluster_wise_dists.append((1 / len(local_cores_in[l])) * sum(dists))
-            # get minimum local core averaged distance to i over all other clusters
-            b_i = min(cluster_wise_dists)
-            # set into silhouette coefficient like equation
-            lccv = sil_eq(a_i, b_i)
-            # number of points being represented by i
-            n_i = rep_count.count(i)
-            # add score for this local core
-            lccv_sum = lccv_sum + (lccv * n_i)
+        # local cores that are noise are only included in b_i
+        if label != -1:
+            # get all local cores belonging to the same cluster
+            local_core_in_A = local_cores_in[label]
+            # get number of local cores in cluster A
+            n_l_A = len(local_core_in_A)
+            # if there is only one local core in the cluster
+            if n_l_A == 1:
+                lccv_sum += 0
+            else:
+                # distances between i and every local core also belonging to the same cluster
+                dists = [dist_matrix[i, j] for j in local_core_in_A]
+                # a is defined in section D LCCV Index
+                a_i = (1 / (n_l_A - 1)) * np.sum(dists)
+                # distances between i and local points form other clusters cluster wise
+                cluster_wise_dists = []
+                # for each label that is not A
+                for l in np.unique(labels):
+                    if l != label:
+                        # include local core averaged distance to i
+                        dists = [dist_matrix[i, j] for j in local_cores_in[l]]
+                        cluster_wise_dists.append((1 / len(local_cores_in[l])) * sum(dists))
+                # get minimum local core averaged distance to i over all other clusters
+                b_i = min(cluster_wise_dists)
+                # set into silhouette coefficient like equation
+                lccv = sil_eq(a_i, b_i)
+                # number of points being represented by i
+                n_i = rep_count.count(i)
+                # add score for this local core
+                lccv_sum = lccv_sum + (lccv * n_i)
     # reduce local core wise scores to one score for the clustering
     lccv_c = (1 / N) * lccv_sum
     return lccv_c
