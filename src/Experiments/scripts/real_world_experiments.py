@@ -14,13 +14,14 @@ sys.path.append(DISCO_ROOT_PATH)
 os.environ["TZ"] = "Europe/Vienna"
 
 from datasets.real_world_datasets import Datasets as RealWorldDatasets
+from datasets.density_datasets import Datasets as DensityDatasets
 from src.utils.metrics import METRICS as ALL_METRICS
 from src.utils.experiments import insert_dict, exec_metric
 
 
 RESULTS_PATH = f"{DISCO_ROOT_PATH}/results/"
 TASK_TIMEOUT = 24 * 60 * 60  # 24 hours
-N_JOBS = 20  # 32
+N_JOBS = 1  # 32
 RUNS = 1
 
 # del ALL_METRICS["CDBW"]
@@ -44,6 +45,24 @@ elif sys.argv[1] == "standardized":
         "dataset_names": [dataset.name for dataset in RealWorldDatasets.get_experiments_list()],
         "dataset_id_dict": {dataset.name: dataset.id for dataset in RealWorldDatasets.get_experiments_list()},
         "dataset_load_fn_dict": {dataset.name: lambda dataset=dataset: dataset.standardized_data_cached for dataset in RealWorldDatasets.get_experiments_list()},
+        "metrics": METRICS,
+    }
+elif sys.argv[1] == "density_normal":
+    print("Use data without z-normalization\n")
+    config = {
+        "save_folder": "density",
+        "dataset_names": [dataset.name for dataset in DensityDatasets],
+        "dataset_id_dict": {dataset.name: dataset.id for dataset in DensityDatasets},
+        "dataset_load_fn_dict": {dataset.name: lambda dataset=dataset: dataset.data_cached for dataset in DensityDatasets},
+        "metrics": METRICS,
+    }
+elif sys.argv[1] == "density_standardized":
+    print("Use data with z-normalization\n")
+    config = {
+        "save_folder": "density_standardized",
+        "dataset_names": [dataset.name for dataset in DensityDatasets],
+        "dataset_id_dict": {dataset.name: dataset.id for dataset in DensityDatasets},
+        "dataset_load_fn_dict": {dataset.name: lambda dataset=dataset: dataset.standardized_data_cached for dataset in DensityDatasets},
         "metrics": METRICS,
     }
 else:

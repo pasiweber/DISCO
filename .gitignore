@@ -1,11 +1,17 @@
 __pycache__/
+.DS_Store
 
 .cache/
 .cache_magic/
 
 imgs/
+imgs
 results/**/*.csv
 latex/
+latex
 
 *.log
 *.err
+
+
+TODOs.txt

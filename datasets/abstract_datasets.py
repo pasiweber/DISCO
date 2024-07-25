@@ -44,11 +44,11 @@ class AbstractDatasets(Enum):
 
     @abstractmethod
     def load_dataset(self) -> tuple:
-        pass
+        raise NotImplementedError
 
     @abstractmethod
     def standardize_dataset(self, X, l) -> tuple:
-        pass
+        raise NotImplementedError
 
 
 def standardize(X, l, axis=None):

@@ -28,7 +28,7 @@ class Datasets(AbstractDatasets):
         match self:
             # Synthetic data generated with DENSIRED
 
-            case Datasets.Dataset1:
+            case self.Dataset1:
                 return {
                     "dim": 2,
                     "n": 550,
@@ -38,7 +38,7 @@ class Datasets(AbstractDatasets):
                     "seed": 0,
                 }
 
-            case Datasets.Dataset2:
+            case self.Dataset2:
                 return {
                     "dim": 2,
                     "n": 1050,
@@ -51,7 +51,7 @@ class Datasets(AbstractDatasets):
                     },
                 }
 
-            case Datasets.DatasetDensiredExample:
+            case self.DatasetDensiredExample:
                 return {
                     "n": 5000,
                     "kwargs": {
@@ -84,9 +84,9 @@ class Datasets(AbstractDatasets):
         match self:
             case dataset if dataset in [
                 # Synthetic data generated with DENSIRED
-                Datasets.Dataset1,
-                Datasets.Dataset2,
-                Datasets.DatasetDensiredExample,
+                self.Dataset1,
+                self.Dataset2,
+                self.DatasetDensiredExample,
             ]:
                 return standardize(X, l, axis=0)
             case dataset if dataset in []:
