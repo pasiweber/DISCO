@@ -123,8 +123,6 @@ def LORE(LN, rho, X, dist):
     #print(LN[316])
     # for each datapoint
     for i in range(N):
-        if len(rep[i]) == 0:
-            print(' Rep {} {}'.format(i, rep[i]))
         # if the representative of i ist i itself
         if len(rep[i]) != 0 and rep[i][0] == i:
             # the i is local core
