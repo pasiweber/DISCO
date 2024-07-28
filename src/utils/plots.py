@@ -3,7 +3,7 @@ import math
 import matplotlib.pyplot as plt
 import matplotlib.gridspec as gridspec
 import seaborn as sns
-from src.utils.metrics import RESCALED_METRICS, METRIC_ABBREV
+from src.utils.metrics import SELECTED_METRICS, RESCALED_METRICS, METRIC_ABBREV_LATEX
 
 
 def plot_datasets(
@@ -56,7 +56,7 @@ def plot_lineplot(
     x_axis,
     y_axis,
     grouping=None,
-    order=None,
+    order=SELECTED_METRICS,
     x_range=(None, None),
     y_range=(None, None),
     # figsize=(15, 5),
@@ -65,7 +65,7 @@ def plot_lineplot(
     errorbar="se",
     highlight=1,
     red_legend_lables=RESCALED_METRICS,
-    metric_abbrev=METRIC_ABBREV,
+    metric_abbrev=METRIC_ABBREV_LATEX,
 ):
     """Plot a line plot for a dataframe."""
 
@@ -78,6 +78,9 @@ def plot_lineplot(
 
     if order is None:
         order = list(df[grouping].unique())
+    for metric in order.copy():
+        if metric not in df[grouping].unique():
+            order.remove(metric)
 
     highlight_index = (
         [highlight] + list(range(0, highlight)) + list(range(highlight + 1, len(order)))
@@ -136,8 +139,8 @@ def plot_lineplot(
     for text in leg.get_texts():
         if text.get_text() in red_legend_lables:
             text.set_color("red")
-        if text in metric_abbrev:
-            text.set_label(metric_abbrev[text])
+        if text.get_text() in metric_abbrev:
+            text.set_text(metric_abbrev[text.get_text()])
 
     frame = leg.get_frame()
     frame.set_facecolor("white")

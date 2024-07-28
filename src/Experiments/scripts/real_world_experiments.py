@@ -73,7 +73,12 @@ else:
 
 def exec_metric_(shared_objects, dataset_name, run, metric_name):
     datasets, metrics = shared_objects
-    return exec_metric(datasets[(dataset_name, run)], metrics[metric_name])
+    try:
+        value = exec_metric(datasets[(dataset_name, run)], metrics[metric_name])
+        return value
+    except Exception as e:
+        print(e)
+        return np.nan
 
 def run(save_folder, dataset_names, dataset_id_dict, dataset_load_fn_dict, metrics):
     datasets = {}

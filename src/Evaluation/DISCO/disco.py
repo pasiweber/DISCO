@@ -1,40 +1,95 @@
 import numpy as np
-from sklearn.preprocessing import LabelEncoder
 import functools
-from sklearn.metrics.pairwise import _VALID_METRICS, pairwise_distances, pairwise_distances_chunked
+from sklearn.preprocessing import LabelEncoder
+from sklearn.metrics.pairwise import pairwise_distances_chunked
 from sklearn.neighbors import KDTree
 from scipy.sparse import issparse
 
 from src.Evaluation.dcdistances.dctree import DCTree
 
 
-def disco_score(X, labels, min_points = 5):
+def disco_score(X: np.ndarray, labels: np.ndarray, min_points: int = 5) -> float:
     dc_distances = DCTree(X, min_points=min_points, no_fastindex=False).dc_distances()
-    labels = np.reshape(labels, len(labels))
-    silhouette_dc_values = silhouette_samples(
+
+    # Labels needs to be a one dimensional vector
+    labels = np.reshape(labels, -1)
+
+    disco_values = disco_samples(X, labels, min_points, dc_distances)
+    noise_values = noise_samples(X, labels, min_points, dc_distances)
+
+    return float(np.mean(np.concatenate((disco_values, noise_values))))
+
+
+def disco_samples(
+    X: np.ndarray,
+    labels: np.ndarray,
+    min_points: int = 5,
+    dc_distances: np.ndarray | None = None,
+) -> np.ndarray:
+    if len(X) == 0:
+        raise ValueError("Can't calculate DISCO score for empty dataset.")
+    if len(X) != len(labels):
+        raise ValueError("Dataset size differs from label size.")
+
+    label_set = set(labels)
+    # Only noise
+    if label_set == {-1}:
+        return np.array([])
+    # One cluster without noise
+    if len(label_set) == 1 and label_set != {-1}:
+        return np.full(len(X), 0)
+    # One cluster with noise
+    if len(label_set) == 2 and -1 in label_set:
+        labels = labels.copy()
+        labels[labels == -1] = np.arange(-2, -len(labels[labels == -1]) - 2, -1)
+
+    if dc_distances is None:
+        dc_distances = DCTree(X, min_points=min_points, no_fastindex=False).dc_distances()
+
+    # DISCO evaluation per non noise sample
+    DISCO_evaluations = silhouette_samples(
         dc_distances[np.ix_(labels != -1, labels != -1)],
         labels[labels != -1],
         metric="precomputed",
     )
-    noise_values = noise_eval(X, labels, min_points, dc_distances)
-
-    return np.mean(np.concatenate((silhouette_dc_values, noise_values)))
+    return DISCO_evaluations
 
 
-def noise_eval(X, labels, min_points=5, dc_distances=None):
+def noise_samples(
+    X: np.ndarray,
+    labels: np.ndarray,
+    min_points: int = 5,
+    dc_distances: np.ndarray | None = None,
+) -> np.ndarray:
+    if len(X) == 0:
+        raise ValueError("Can't calculate noise score for empty dataset.")
+    if len(X) != len(labels):
+        raise ValueError("Dataset size differs from label size.")
+
+    label_set = set(labels)
+    # Only noise
+    if label_set == {-1}:
+        return np.full(len(X), -1)
+    # No noise
+    if -1 not in label_set:
+        return np.array([])
+
+    ## At least one cluster and noise ##
     if dc_distances is None:
         dc_distances = DCTree(X, min_points=min_points, no_fastindex=False).dc_distances()
 
-    # Noise evaluation
+    # Noise evaluation per noise sample
     tree = KDTree(X)
     core_dists, _ = tree.query(X, k=min_points)
     core_dists = core_dists.max(axis=1)
 
+    # Get maximum core distance per cluster
     cluster_ids = set(labels[labels != -1])
     max_core_dist = np.empty(len(cluster_ids))
     for i, id in enumerate(cluster_ids):
         max_core_dist[i] = core_dists[labels == id].max()
 
+    # Core property of noise evaluation
     noise_core_prop = np.full(len(labels[labels == -1]), np.inf)
     for i in range(len(cluster_ids)):
         noise_core_prop_i = (core_dists[labels == -1] - max_core_dist[i]) / np.maximum(
@@ -42,20 +97,20 @@ def noise_eval(X, labels, min_points=5, dc_distances=None):
         )
         noise_core_prop = np.minimum(noise_core_prop, noise_core_prop_i)
 
-    noise_dc = np.full(len(labels[labels == -1]), np.inf)
+    # Distance property of noise evaluation
+    noise_dc_prop = np.full(len(labels[labels == -1]), np.inf)
     for i, id in enumerate(cluster_ids):
         min_dist_cluster_i = np.min(dc_distances[np.ix_(labels == -1, labels == id)], axis=1)
         noise_dc_i = (min_dist_cluster_i - max_core_dist[i]) / np.maximum(
             min_dist_cluster_i, max_core_dist[i]
         )
-        noise_dc = np.minimum(noise_dc, noise_dc_i)
+        noise_dc_prop = np.minimum(noise_dc_prop, noise_dc_i)
 
-    return np.minimum(noise_core_prop, noise_dc)
+    # Noise evaluation is minimum of core and distance property
+    return np.minimum(noise_core_prop, noise_dc_prop)
 
 
-def silhouette_score(
-        X, labels, *, metric="euclidean", sample_size=None, random_state=None, **kwds
-):
+def silhouette_score(X, labels, *, metric="euclidean", sample_size=None, random_state=None, **kwds):
     """Compute the mean Silhouette Coefficient of all samples.
 
     The Silhouette Coefficient is calculated using the mean intra-cluster
@@ -236,9 +291,7 @@ def silhouette_samples(X, labels, *, metric="euclidean", **kwds):
     check_number_of_labels(len(le.classes_), n_samples)
 
     kwds["metric"] = metric
-    reduce_func = functools.partial(
-        _silhouette_reduce, labels=labels, label_freqs=label_freqs
-    )
+    reduce_func = functools.partial(_silhouette_reduce, labels=labels, label_freqs=label_freqs)
     results = zip(*pairwise_distances_chunked(X, reduce_func=reduce_func, **kwds))
     intra_clust_dists, inter_clust_dists = results
     intra_clust_dists = np.concatenate(intra_clust_dists)
@@ -254,6 +307,7 @@ def silhouette_samples(X, labels, *, metric="euclidean", **kwds):
     # nan values are for clusters of size 1, and should be 0
     return np.nan_to_num(sil_samples)
 
+
 def check_number_of_labels(n_labels, n_samples):
     """Check that number of labels are valid.
 
@@ -267,9 +321,9 @@ def check_number_of_labels(n_labels, n_samples):
     """
     if not 1 < n_labels < n_samples:
         raise ValueError(
-            "Number of labels is %d. Valid values are 2 to n_samples - 1 (inclusive)"
-            % n_labels
+            "Number of labels is %d. Valid values are 2 to n_samples - 1 (inclusive)" % n_labels
         )
+
 
 def _silhouette_reduce(D_chunk, start, labels, label_freqs):
     """Accumulate silhouette statistics for vertical chunk of X.
@@ -288,15 +342,11 @@ def _silhouette_reduce(D_chunk, start, labels, label_freqs):
     """
     n_chunk_samples = D_chunk.shape[0]
     # accumulate distances from each sample to each cluster
-    cluster_distances = np.zeros(
-        (n_chunk_samples, len(label_freqs)), dtype=D_chunk.dtype
-    )
+    cluster_distances = np.zeros((n_chunk_samples, len(label_freqs)), dtype=D_chunk.dtype)
 
     if issparse(D_chunk):
         if D_chunk.format != "csr":
-            raise TypeError(
-                "Expected CSR matrix. Please pass sparse matrix in CSR format."
-            )
+            raise TypeError("Expected CSR matrix. Please pass sparse matrix in CSR format.")
         for i in range(n_chunk_samples):
             indptr = D_chunk.indptr
             indices = D_chunk.indices[indptr[i] : indptr[i + 1]]

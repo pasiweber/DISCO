@@ -6,8 +6,7 @@ parent_folder = os.path.dirname(os.path.abspath("./"))
 sys.path.append(parent_folder)
 
 
-from src.Evaluation.DISCO.disco import disco_score as DISCO
-from src.Evaluation.DISCO.disco import noise_eval as noise_eval
+from src.Evaluation.DISCO.disco import disco_score as DISCO, noise_samples as noise_samples
 from src.Evaluation.DC_DUNN.dc_dunn import dc_dunn_score as DC_DUNN
 
 # Competitors
@@ -18,6 +17,8 @@ from src.Evaluation.CDBW.cdbw import cdbw_score as CDBW
 from src.Evaluation.CVDD.cvdd_new import cvdd_score as CVDD
 from src.Evaluation.CVNN.cvnn import cvnn_score as CVNN
 from src.Evaluation.DSI.dsi import dsi_score as DSI
+from src.Evaluation.LCCV.lccv import lccv_score as LCCV
+from src.Evaluation.VIASCKDE.viasckde import viasckde_score as VIASCKDE
 
 # Gauss
 from sklearn.metrics import silhouette_score as SILHOUETTE
@@ -32,11 +33,13 @@ METRICS = {
     ### Competitors
     "DBCV": lambda X, l: DBCV(X, l),
     "DCSI": lambda X, l: DCSI(X, l),  ## min_pts
-    "S_DBW": S_DBW,
     "CDBW": CDBW,
     "CVDD": CVDD,
-    "CVNN": CVNN,  ## min_pts
     "DSI": DSI,
+    "LCCV": LCCV,
+    "VIASCKDE": VIASCKDE,
+    "S_DBW": S_DBW,
+    "CVNN": CVNN,  ## min_pts
     ### Gauss
     "SILHOUETTE": SILHOUETTE,
     "DUNN": DUNN,
@@ -55,12 +58,36 @@ METRIC_ABBREV = {
     "CVDD": "CVDD",
     "CVNN": "CVNN",
     "DSI": "DSI",
+    "LCCV": "LCCV",
+    "VIASCKDE": "VIAS.",
     ### Gauss
     "SILHOUETTE": "SILH.",
     "DUNN": "DUNN",
     "DB": "DB",
     "CH": "CH",
 }
+
+
+METRIC_ABBREV_LATEX = {
+    "DISCO": "DISCO (↥)",
+    # "DC_DUNN": r"DC_DUNN ($\\uparrow$)",
+    ### Competitors
+    "DBCV": "DBCV (↥)",
+    "DCSI": "DCSI (↥)",
+    "S_DBW": "S_Dbw (↓)",
+    "CDBW": "CDbw (↑)",
+    "CVDD": "CVDD (↑)",
+    "CVNN": "CVNN (↓)",
+    "DSI": "DSI (↥)",
+    "LCCV": "LCCV (↥)",
+    "VIASCKDE": "VIAS. (↥)",
+    ### Gauss
+    "SILHOUETTE": "SILH. (↥)",
+    "DUNN": "DUNN (↑)",
+    "DB": "DB (↑)",
+    "CH": "CH (↑)",
+}
+
 
 METRIC_ABBREV_TABLES = {
     "DISCO": r"DISCO ($\\uparrow$)",
@@ -73,6 +100,8 @@ METRIC_ABBREV_TABLES = {
     "CVDD": r"CVDD ($\\uparrow$)",
     "CVNN": r"CVNN ($\\downarrow$)",
     "DSI": r"DSI ($\\uparrow$)",
+    "LCCV": r"LCCV ($\\uparrow$)",
+    "VIASCKDE": r"VIAS. ($\\uparrow$)",
     ### Gauss
     "SILHOUETTE": r"SILH. ($\\uparrow$)",
     "DUNN": r"DUNN ($\\uparrow$)",
@@ -87,11 +116,13 @@ SELECTED_METRICS = [
     ### Competitors
     "DBCV",
     "DCSI",
-    # "S_DBW",
-    # "CDBW",
-    # "CVDD",
-    # "CVNN",
     "DSI",
+    "LCCV",
+    "VIASCKDE",
+    "CDBW",
+    "CVDD",
+    "S_DBW",
+    "CVNN",
     ### Gauss
     "SILHOUETTE",
     # "DUNN",
@@ -109,6 +140,24 @@ RESCALED_METRICS = [
     "S_DBW",
     "CDBW",
     "CVDD",
+    "CVNN",
+    # "DSI",
+    ### Gauss
+    # "SILHOUETTE",
+    # "DUNN",
+    # "DB",
+    # "CH",
+]
+
+INVERTED_METRICS = [
+    # "DISCO",
+    # "DC_DUNN",
+    ### Competitors
+    # "DBCV",
+    # "DCSI",
+    "S_DBW",
+    # "CDBW",
+    # "CVDD",
     "CVNN",
     # "DSI",
     ### Gauss
@@ -145,25 +194,29 @@ def rescale_measures(df, metrics):
     return df
 
 
+def invert_scale_measures(df, metrics):
+    df.copy()
+    values = df[df.measure.isin(metrics)].groupby(["measure"])["value"]
+    df.loc[df.measure.isin(metrics), "value"] = values.transform(
+        lambda x: x.max() - x
+    )
+    return df
+
+
 def create_and_rescale_df(
     eval_results,
     selected_metrics=SELECTED_METRICS,
     excluded_metrics=[],
     rescale_metrics=RESCALED_METRICS,
+    invert_metrics=INVERTED_METRICS,
     sort=False,
 ):
     df = create_and_filter_df(
         eval_results,
         selected_metrics=selected_metrics,
-        excluded_metrics=excluded_metrics + rescale_metrics,
-        sort=sort,
-    )
-    df_ = create_and_filter_df(
-        eval_results,
-        selected_metrics=rescale_metrics,
         excluded_metrics=excluded_metrics,
         sort=sort,
     )
-    df_ = rescale_measures(df_, rescale_metrics)
-    df = pd.concat((df, df_))
+    df = invert_scale_measures(df, invert_metrics)
+    df = rescale_measures(df, rescale_metrics)
     return df

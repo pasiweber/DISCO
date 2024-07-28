@@ -43,7 +43,7 @@ def viasckde_score(X, labels, krnl='gaussian', b_width=0.05):
         for k in range(len(numC)):
             viasc += numC[k] * CoSeD[k]
         viasc = viasc / sum(numC)
-        print("viasc=%0.4f" % viasc)
+        # print("viasc=%0.4f" % viasc)
     else:
         viasc = float("nan")
     return viasc
