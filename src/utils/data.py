@@ -20,7 +20,7 @@ def sample_datasets(datasets, func):
     return np.apply_along_axis(lambda data: apply_to_sample(data), 2, datasets)
 
 
-def add_noise(X, l, n_noise, eps):
+def add_noise(X, l, n_noise, eps, noise_eps):
     """Add noise to data with at least eps distance to the data."""
 
     noise = np.empty((n_noise, X.shape[1]))
@@ -29,9 +29,13 @@ def add_noise(X, l, n_noise, eps):
         noise[noise_too_near] = np.random.uniform(
             np.min(X, axis=0), np.max(X, axis=0), size=(len(noise_too_near), X.shape[1])
         )
-        nbrs = NearestNeighbors(n_neighbors=1).fit(X)
-        dists, _ = nbrs.kneighbors(noise)
-        noise_too_near = np.where(dists < eps)[0]
+        nbrs_points = NearestNeighbors(n_neighbors=1).fit(X)
+        dists_points = nbrs_points.kneighbors(noise)[0]
+        noise_too_near_points = np.where(dists_points < eps)[0]
+        nbrs_noise = NearestNeighbors(n_neighbors=2).fit(noise)
+        dists_noise = nbrs_noise.kneighbors(noise)[0][:, 1]
+        noise_too_near_noise = np.where(dists_noise < noise_eps)[0]
+        noise_too_near = np.unique(np.hstack((noise_too_near_points, noise_too_near_noise)))
 
     X_ = np.vstack((X, noise))
     l_ = np.hstack((l, np.array([-1] * len(noise))))

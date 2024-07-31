@@ -3,7 +3,7 @@ import math
 import matplotlib.pyplot as plt
 import matplotlib.gridspec as gridspec
 import seaborn as sns
-from src.utils.metrics import SELECTED_METRICS, RESCALED_METRICS, METRIC_ABBREV_LATEX
+from src.utils.metrics import SELECTED_METRICS, RESCALED_METRICS, METRIC_ABBREV
 
 
 def plot_datasets(
@@ -60,14 +60,20 @@ def plot_lineplot(
     x_range=(None, None),
     y_range=(None, None),
     # figsize=(15, 5),
-    figsize=(9, 4),
+    # figsize=(9, 4),
+    figsize=(10, 6),
     dpi=200,
-    errorbar="se",
+    # errorbar="se",
+    errorbar=("ci", 75),
     highlight=1,
-    red_legend_lables=RESCALED_METRICS,
-    metric_abbrev=METRIC_ABBREV_LATEX,
+    red_legend_lables=[],
+    metric_abbrev=METRIC_ABBREV,
+    font_size=16,
+    ncol=4,
+    row_wise=True,
 ):
     """Plot a line plot for a dataframe."""
+    plt.rcParams.update({"font.size": font_size})
 
     fig = plt.figure(
         figsize=figsize,
@@ -126,15 +132,21 @@ def plot_lineplot(
     handles, _ = plt.gca().get_legend_handles_labels()
     inverse_index = np.empty(len(order), dtype=int)
     inverse_index[highlight_index] = np.arange(0, len(order))
+    if row_wise:
+        row_wise_index = sum((list(range(len(order))[i::ncol]) for i in range(ncol)), [])
+    else:
+        row_wise_index = list(range(len(order)))
     leg = plt.legend(
-        handles=list(np.array(handles[::-1])[inverse_index]),
-        labels=list(np.array(order)[inverse_index]),
-        loc="center left",
-        bbox_to_anchor=(1, 0.5),
-        # loc="lower center",
-        # bbox_to_anchor=(0.5, 1),
+        handles=list(np.array(handles[::-1])[inverse_index][row_wise_index]),
+        labels=list(np.array(order)[inverse_index][row_wise_index]),
+        # loc="center left",
+        # bbox_to_anchor=(1, 0.5),
+        loc="lower center",
+        bbox_to_anchor=(0.5, 1.05),
+        # loc="upper center",
+        # bbox_to_anchor=(0.5, 0),
         # fontsize=19,
-        # ncol=4,
+        ncol=ncol,
     )
     for text in leg.get_texts():
         if text.get_text() in red_legend_lables:

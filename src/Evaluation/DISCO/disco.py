@@ -9,53 +9,66 @@ from src.Evaluation.dcdistances.dctree import DCTree
 
 
 def disco_score(X: np.ndarray, labels: np.ndarray, min_points: int = 5) -> float:
-    dc_distances = DCTree(X, min_points=min_points, no_fastindex=False).dc_distances()
-
-    # Labels needs to be a one dimensional vector
-    labels = np.reshape(labels, -1)
-
-    disco_values = disco_samples(X, labels, min_points, dc_distances)
-    noise_values = noise_samples(X, labels, min_points, dc_distances)
-
-    return float(np.mean(np.concatenate((disco_values, noise_values))))
+    return float(np.mean(disco_samples(X, labels, min_points)))
 
 
 def disco_samples(
     X: np.ndarray,
     labels: np.ndarray,
     min_points: int = 5,
-    dc_distances: np.ndarray | None = None,
 ) -> np.ndarray:
     if len(X) == 0:
         raise ValueError("Can't calculate DISCO score for empty dataset.")
-    if len(X) != len(labels):
+    elif len(X) != len(labels):
         raise ValueError("Dataset size differs from label size.")
+
+    # Labels needs to be a one dimensional vector
+    labels = np.reshape(labels, -1)
 
     label_set = set(labels)
     # Only noise
     if label_set == {-1}:
-        return np.array([])
+        return np.full(len(X), -1)
     # One cluster without noise
-    if len(label_set) == 1 and label_set != {-1}:
+    elif len(label_set) == 1 and label_set != {-1}:
         return np.full(len(X), 0)
     # One cluster with noise
-    if len(label_set) == 2 and -1 in label_set:
-        labels = labels.copy()
-        labels[labels == -1] = np.arange(-2, -len(labels[labels == -1]) - 2, -1)
-
-    if dc_distances is None:
+    elif len(label_set) == 2 and -1 in label_set:
         dc_distances = DCTree(X, min_points=min_points, no_fastindex=False).dc_distances()
+        labels_ = labels.copy()
+        labels_[labels_ == -1] = np.arange(-1, -len(labels_[labels_ == -1]) - 1, -1)
+        disco_values = only_disco_samples(dc_distances, labels_)
+        disco_values[labels == -1] = only_noise_samples(X, labels, min_points, dc_distances)
+        return disco_values
+    # More then one cluster with optional noise
+    else:
+        dc_distances = DCTree(X, min_points=min_points, no_fastindex=False).dc_distances()
+        disco_values = np.empty(len(X))
+        disco_values[labels != -1] = only_disco_samples(
+            dc_distances[np.ix_(labels != -1, labels != -1)], labels[labels != -1]
+        )
+        disco_values[labels == -1] = only_noise_samples(X, labels, min_points, dc_distances)
+        return disco_values
+
+
+def only_disco_samples(dc_distances: np.ndarray, labels: np.ndarray) -> np.ndarray:
+    if len(dc_distances) == 0:
+        raise ValueError("Can't calculate DISCO score for empty dataset.")
+    elif dc_distances.shape[0] != dc_distances.shape[1]:
+        raise ValueError("dc_distances needs to be a distance matrix.")
+    elif len(dc_distances) != len(labels):
+        raise ValueError("Dataset size differs from label size.")
 
     # DISCO evaluation per non noise sample
     DISCO_evaluations = silhouette_samples(
-        dc_distances[np.ix_(labels != -1, labels != -1)],
-        labels[labels != -1],
+        dc_distances,
+        labels,
         metric="precomputed",
     )
     return DISCO_evaluations
 
 
-def noise_samples(
+def only_noise_samples(
     X: np.ndarray,
     labels: np.ndarray,
     min_points: int = 5,
@@ -63,7 +76,7 @@ def noise_samples(
 ) -> np.ndarray:
     if len(X) == 0:
         raise ValueError("Can't calculate noise score for empty dataset.")
-    if len(X) != len(labels):
+    elif len(X) != len(labels):
         raise ValueError("Dataset size differs from label size.")
 
     label_set = set(labels)
@@ -71,7 +84,7 @@ def noise_samples(
     if label_set == {-1}:
         return np.full(len(X), -1)
     # No noise
-    if -1 not in label_set:
+    elif -1 not in label_set:
         return np.array([])
 
     ## At least one cluster and noise ##

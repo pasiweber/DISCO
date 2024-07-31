@@ -20,12 +20,12 @@ from src.utils.experiments import insert_dict, exec_metric
 
 
 RESULTS_PATH = f"{DISCO_ROOT_PATH}/results/"
-TASK_TIMEOUT = 24 * 60 * 60  # 24 hours
-N_JOBS = 1  # 32
-RUNS = 1
+TASK_TIMEOUT = 6 * 60 * 60  # 6 hours
 
 # del ALL_METRICS["CDBW"]
 # del ALL_METRICS["CVDD"]
+# del ALL_METRICS["LCCV"]
+# del ALL_METRICS["VIASCKDE"]
 METRICS = ALL_METRICS
 
 
@@ -38,6 +38,10 @@ if sys.argv[1] == "normal":
         "dataset_load_fn_dict": {dataset.name: lambda dataset=dataset: dataset.data_cached for dataset in RealWorldDatasets.get_experiments_list()},
         "metrics": METRICS,
     }
+    N_JOBS = 1
+    RUNS = 1
+    del ALL_METRICS["CDBW"]
+
 elif sys.argv[1] == "standardized":
     print("Use data with z-normalization\n")
     config = {
@@ -47,6 +51,11 @@ elif sys.argv[1] == "standardized":
         "dataset_load_fn_dict": {dataset.name: lambda dataset=dataset: dataset.standardized_data_cached for dataset in RealWorldDatasets.get_experiments_list()},
         "metrics": METRICS,
     }
+    N_JOBS = 1
+    RUNS = 1
+    del ALL_METRICS["CDBW"]
+
+
 elif sys.argv[1] == "density_normal":
     print("Use data without z-normalization\n")
     config = {
@@ -56,6 +65,9 @@ elif sys.argv[1] == "density_normal":
         "dataset_load_fn_dict": {dataset.name: lambda dataset=dataset: dataset.data_cached for dataset in DensityDatasets},
         "metrics": METRICS,
     }
+    N_JOBS = 32
+    RUNS = 10
+
 elif sys.argv[1] == "density_standardized":
     print("Use data with z-normalization\n")
     config = {
@@ -65,6 +77,9 @@ elif sys.argv[1] == "density_standardized":
         "dataset_load_fn_dict": {dataset.name: lambda dataset=dataset: dataset.standardized_data_cached for dataset in DensityDatasets},
         "metrics": METRICS,
     }
+    N_JOBS = 32
+    RUNS = 10
+
 else:
     print("Need to select `standardized` or `normal`!\n")
     exit()
@@ -74,11 +89,10 @@ else:
 def exec_metric_(shared_objects, dataset_name, run, metric_name):
     datasets, metrics = shared_objects
     try:
-        value = exec_metric(datasets[(dataset_name, run)], metrics[metric_name])
-        return value
+        return exec_metric(datasets[(dataset_name, run)], metrics[metric_name])
     except Exception as e:
-        print(e)
-        return np.nan
+        print(add_time(f"Error - Dataset: {dataset_name}, Run: {run}, Metric: {metric_name} - {e}"))
+        return np.nan, np.nan, np.nan
 
 def run(save_folder, dataset_names, dataset_id_dict, dataset_load_fn_dict, metrics):
     datasets = {}

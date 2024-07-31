@@ -6,7 +6,7 @@ parent_folder = os.path.dirname(os.path.abspath("./"))
 sys.path.append(parent_folder)
 
 
-from src.Evaluation.DISCO.disco import disco_score as DISCO, noise_samples as noise_samples
+from src.Evaluation.DISCO.disco import disco_score as DISCO, only_noise_samples as only_noise_samples
 from src.Evaluation.DC_DUNN.dc_dunn import dc_dunn_score as DC_DUNN
 
 # Competitors
@@ -33,80 +33,80 @@ METRICS = {
     ### Competitors
     "DBCV": lambda X, l: DBCV(X, l),
     "DCSI": lambda X, l: DCSI(X, l),  ## min_pts
-    "CDBW": CDBW,
-    "CVDD": CVDD,
-    "DSI": DSI,
     "LCCV": LCCV,
     "VIASCKDE": VIASCKDE,
-    "S_DBW": S_DBW,
+    "CVDD": CVDD,
+    "CDBW": CDBW,
     "CVNN": CVNN,  ## min_pts
+    # "DSI": DSI,
     ### Gauss
     "SILHOUETTE": SILHOUETTE,
-    "DUNN": DUNN,
-    "DB": DB,
-    "CH": CH,
-}
-
-METRIC_ABBREV = {
-    "DISCO": "DISCO",
-    # "DC_DUNN": "DC_DUNN",
-    ### Competitors
-    "DBCV": "DBCV",
-    "DCSI": "DCSI",
-    "S_DBW": "S_Dbw",
-    "CDBW": "CDbw",
-    "CVDD": "CVDD",
-    "CVNN": "CVNN",
-    "DSI": "DSI",
-    "LCCV": "LCCV",
-    "VIASCKDE": "VIAS.",
-    ### Gauss
-    "SILHOUETTE": "SILH.",
-    "DUNN": "DUNN",
-    "DB": "DB",
-    "CH": "CH",
+    "S_DBW": S_DBW,
+    # "DUNN": DUNN,
+    # "DB": DB,
+    # "CH": CH,
 }
 
 
-METRIC_ABBREV_LATEX = {
+METRIC_ABBREV_OLD = {
     "DISCO": "DISCO (↥)",
     # "DC_DUNN": r"DC_DUNN ($\\uparrow$)",
     ### Competitors
     "DBCV": "DBCV (↥)",
     "DCSI": "DCSI (↥)",
-    "S_DBW": "S_Dbw (↓)",
+    "LCCV": "LCCV (↥)",
+    "VIASCKDE": "VIAS. (↥)",
     "CDBW": "CDbw (↑)",
     "CVDD": "CVDD (↑)",
     "CVNN": "CVNN (↓)",
-    "DSI": "DSI (↥)",
-    "LCCV": "LCCV (↥)",
-    "VIASCKDE": "VIAS. (↥)",
+    # "DSI": "DSI (↥)",
     ### Gauss
     "SILHOUETTE": "SILH. (↥)",
-    "DUNN": "DUNN (↑)",
-    "DB": "DB (↑)",
-    "CH": "CH (↑)",
+    "S_DBW": "S_Dbw (↓)",
+    # "DUNN": "DUNN (↑)",
+    # "DB": "DB (↑)",
+    # "CH": "CH (↑)",
+}
+
+METRIC_ABBREV = {
+    "DISCO": "DISCO",
+    # "DC_DUNN": r"DC_DUNN ($\\uparrow$)",
+    ### Competitors
+    "DBCV": "DBCV",
+    "DCSI": "DCSI",
+    "LCCV": "LCCV",
+    "VIASCKDE": "VIASCKDE",
+    "CVDD": "CVDD (↕)",
+    "CDBW": "CDbw (↕)",
+    "CVNN": "CVNN (⇅)",
+    # "DSI": "DSI (↥)",
+    ### Gauss
+    "S_DBW": "S_Dbw (⇅)",
+    "SILHOUETTE": "Silhouette",
+    # "DUNN": "DUNN (↑)",
+    # "DB": "DB (↑)",
+    # "CH": "CH (↑)",
 }
 
 
 METRIC_ABBREV_TABLES = {
-    "DISCO": r"DISCO ($\\uparrow$)",
+    "DISCO": r"DISCO $(\\,\\uparrowfrombar\\,)$",
     # "DC_DUNN": r"DC_DUNN ($\\uparrow$)",
     ### Competitors
-    "DBCV": r"DBCV ($\\uparrow$)",
-    "DCSI": r"DCSI ($\\uparrow$)",
-    "S_DBW": r"S_Dbw ($\\downarrow$)",
-    "CDBW": r"CDbw ($\\uparrow$)",
-    "CVDD": r"CVDD ($\\uparrow$)",
-    "CVNN": r"CVNN ($\\downarrow$)",
-    "DSI": r"DSI ($\\uparrow$)",
-    "LCCV": r"LCCV ($\\uparrow$)",
-    "VIASCKDE": r"VIAS. ($\\uparrow$)",
+    "DBCV": r"DBCV $(\\,\\uparrowfrombar\\,)$",
+    "DCSI": r"DCSI $(\\,\\uparrowfrombar\\,)$",
+    "LCCV": r"LCCV $(\\,\\uparrowfrombar\\,)$",
+    "VIASCKDE": r"VIAS. $(\\,\\uparrowfrombar\\,)$",
+    "CVDD": r"CVDD $(\\,\\uparrow\\,)$",
+    "CDBW": r"CDbw $(\\,\\uparrow\\,)$",
+    "CVNN": r"CVNN $(\\,\\downarrow\\,)$",
+    # "DSI": r"DSI ($\\uparrow$)",
+    "S_DBW": r"S_Dbw $(\\,\\downarrow\\,)$",
+    "SILHOUETTE": r"Silh. $(\\,\\uparrowfrombar\\,)$",
     ### Gauss
-    "SILHOUETTE": r"SILH. ($\\uparrow$)",
-    "DUNN": r"DUNN ($\\uparrow$)",
-    "DB": r"DB ($\\uparrow$)",
-    "CH": r"CH ($\\uparrow$)",
+    # "DUNN": r"DUNN ($\\uparrow$)",
+    # "DB": r"DB ($\\uparrow$)",
+    # "CH": r"CH ($\\uparrow$)",
 }
 
 
@@ -116,15 +116,15 @@ SELECTED_METRICS = [
     ### Competitors
     "DBCV",
     "DCSI",
-    "DSI",
+    # "DSI",
     "LCCV",
     "VIASCKDE",
-    "CDBW",
     "CVDD",
-    "S_DBW",
+    "CDBW",
     "CVNN",
     ### Gauss
     "SILHOUETTE",
+    "S_DBW",
     # "DUNN",
     # "DB",
     # "CH",
