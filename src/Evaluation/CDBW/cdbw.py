@@ -583,6 +583,9 @@ def cdbw_score(X, labels, metric="euclidean", alg_noise='filter', intra_dens_inf
         labels = comb_noise_lab(labels)
     elif alg_noise == 'filter':
         labels, X = filter_noise_lab(X, labels)
+    unique_labels = np.unique(labels)
+    for i, lab in enumerate(unique_labels):
+        labels[labels == lab] = i
     labels = np.asarray(labels)
     distvec = gen_dist_func(metric)
     n_clusters, stdev, dimension, n_points_in_cl, n_max, coord_in_cl, labels_in_cl = prep(X, labels)
