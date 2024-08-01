@@ -32,6 +32,7 @@ METRICS = {
     # "DC_DUNN": DC_DUNN,
     ### Competitors
     "DBCV": lambda X, l: DBCV(X, l),
+    "DBCV_sq": lambda X, l: DBCV(X, l, metric="sqeuclidean"),
     "DCSI": lambda X, l: DCSI(X, l),  ## min_pts
     "LCCV": LCCV,
     "VIASCKDE": VIASCKDE,
@@ -64,7 +65,7 @@ METRIC_ABBREV_OLD = {
     "SILHOUETTE": "SILH. (↥)",
     "S_DBW": "S_Dbw (↓)",
     # "DUNN": "DUNN (↑)",
-    # "DB": "DB (↑)",
+    # "DB": "DB (↓)",
     # "CH": "CH (↑)",
 }
 
@@ -84,7 +85,7 @@ METRIC_ABBREV = {
     "S_DBW": "S_Dbw (⇅)",
     "SILHOUETTE": "Silhouette",
     # "DUNN": "DUNN (↑)",
-    # "DB": "DB (↑)",
+    # "DB": "DB (⇅)",
     # "CH": "CH (↑)",
 }
 
@@ -105,7 +106,7 @@ METRIC_ABBREV_TABLES = {
     "SILHOUETTE": r"Silh. $(\\,\\uparrowfrombar\\,)$",
     ### Gauss
     # "DUNN": r"DUNN ($\\uparrow$)",
-    # "DB": r"DB ($\\uparrow$)",
+    # "DB": r"DB ($\\downarrow$)",
     # "CH": r"CH ($\\uparrow$)",
 }
 
@@ -145,7 +146,7 @@ RESCALED_METRICS = [
     ### Gauss
     # "SILHOUETTE",
     # "DUNN",
-    # "DB",
+    "DB",
     # "CH",
 ]
 
@@ -163,7 +164,7 @@ INVERTED_METRICS = [
     ### Gauss
     # "SILHOUETTE",
     # "DUNN",
-    # "DB",
+    "DB",
     # "CH",
 ]
 

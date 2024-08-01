@@ -38,7 +38,7 @@ def disco_samples(
         labels_ = labels.copy()
         labels_[labels_ == -1] = np.arange(-1, -len(labels_[labels_ == -1]) - 1, -1)
         disco_values = only_disco_samples(dc_distances, labels_)
-        disco_values[labels == -1] = only_noise_samples(X, labels, min_points, dc_distances)
+        disco_values[labels == -1] = np.minimum(*only_noise_samples(X, labels, min_points, dc_distances))
         return disco_values
     # More then one cluster with optional noise
     else:
@@ -47,7 +47,7 @@ def disco_samples(
         disco_values[labels != -1] = only_disco_samples(
             dc_distances[np.ix_(labels != -1, labels != -1)], labels[labels != -1]
         )
-        disco_values[labels == -1] = only_noise_samples(X, labels, min_points, dc_distances)
+        disco_values[labels == -1] = np.minimum(*only_noise_samples(X, labels, min_points, dc_distances))
         return disco_values
 
 
@@ -73,7 +73,7 @@ def only_noise_samples(
     labels: np.ndarray,
     min_points: int = 5,
     dc_distances: np.ndarray | None = None,
-) -> np.ndarray:
+) -> tuple[np.ndarray, np.ndarray]:
     if len(X) == 0:
         raise ValueError("Can't calculate noise score for empty dataset.")
     elif len(X) != len(labels):
@@ -82,10 +82,10 @@ def only_noise_samples(
     label_set = set(labels)
     # Only noise
     if label_set == {-1}:
-        return np.full(len(X), -1)
+        return np.full(len(X), -1), np.full(len(X), -1)
     # No noise
     elif -1 not in label_set:
-        return np.array([])
+        return np.array([]), np.array([])
 
     ## At least one cluster and noise ##
     if dc_distances is None:
@@ -120,7 +120,7 @@ def only_noise_samples(
         noise_dc_prop = np.minimum(noise_dc_prop, noise_dc_i)
 
     # Noise evaluation is minimum of core and distance property
-    return np.minimum(noise_core_prop, noise_dc_prop)
+    return noise_core_prop, noise_dc_prop
 
 
 def silhouette_score(X, labels, *, metric="euclidean", sample_size=None, random_state=None, **kwds):
