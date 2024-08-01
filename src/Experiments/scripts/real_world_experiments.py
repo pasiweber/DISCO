@@ -20,13 +20,14 @@ from src.utils.experiments import insert_dict, exec_metric
 
 
 RESULTS_PATH = f"{DISCO_ROOT_PATH}/results/"
-TASK_TIMEOUT = 6 * 60 * 60  # 6 hours
+TASK_TIMEOUT = 12 * 60 * 60  # 6 hours
 
 # del ALL_METRICS["CDBW"]
 # del ALL_METRICS["CVDD"]
 # del ALL_METRICS["LCCV"]
 # del ALL_METRICS["VIASCKDE"]
-METRICS = ALL_METRICS
+
+METRICS = ALL_METRICS.copy()
 
 
 if sys.argv[1] == "normal":
@@ -90,9 +91,11 @@ def exec_metric_(shared_objects, dataset_name, run, metric_name):
     datasets, metrics = shared_objects
     try:
         return exec_metric(datasets[(dataset_name, run)], metrics[metric_name])
+    except TimeoutError as e:
+        print(add_time(f"Timeout - Dataset: {dataset_name}, Run: {run}, Metric: {metric_name} - {e}"))
     except Exception as e:
-        print(add_time(f"Error - Dataset: {dataset_name}, Run: {run}, Metric: {metric_name} - {e}"))
-        return np.nan, np.nan, np.nan
+        print(add_time(f"Error - Dataset: {dataset_name}, Run: {run}, Metric: {metric_name} - `{e}`"))
+    return np.nan, np.nan, np.nan
 
 def run(save_folder, dataset_names, dataset_id_dict, dataset_load_fn_dict, metrics):
     datasets = {}
@@ -161,7 +164,8 @@ def run(save_folder, dataset_names, dataset_id_dict, dataset_load_fn_dict, metri
             path = f"{RESULTS_PATH}{save_folder}/{dataset_id_dict[dataset_name]}/{metric_name}_{run}.csv"
             os.makedirs(os.path.dirname(path), exist_ok=True)
             df = pd.DataFrame(data=eval_results)
-            df.to_csv(path, index=False)
+            if value != np.nan:
+                df.to_csv(path, index=False)
 
     print(add_time("-----"))
     pool.stop_and_join()
