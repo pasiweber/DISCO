@@ -492,6 +492,8 @@ def sdbw_score(X, labels, centers_id=None, method='Halkidi', alg_noise='filter',
     elif alg_noise == 'filter':
         labels, X = filter_noise_lab(X, labels)
     unique_labels = np.unique(labels)
+    for i, lab in enumerate(unique_labels):
+        labels[labels == lab] = i
     if np.size(unique_labels) < 2:
         raise ValueError('Only one cluster!')
     if centers_id:
