@@ -57,9 +57,16 @@ def max_ratio(stacked_distances):
     return max_ratio
 
 
-def distances_between_points(X, labels, cluster_id,
-                             metric='euclidean', d=None, no_coredist=False,
-                             print_max_raw_to_coredist_ratio=False, **kwd_args):
+def distances_between_points(
+    X,
+    labels,
+    cluster_id,
+    metric="sqeuclidean",
+    d=None,
+    no_coredist=False,
+    print_max_raw_to_coredist_ratio=False,
+    **kwd_args
+):
     """
     Compute pairwise distances for all the points of a cluster.
 
@@ -306,7 +313,7 @@ def density_separation(X, labels, cluster_id1, cluster_id2,
         return mr_dist_matrix.min()
 
 
-def dbcv_score(X, labels, metric='euclidean',
+def dbcv_score(X, labels, metric='sqeuclidean',
                d=None, per_cluster_scores=False, mst_raw_dist=False, verbose=False, algorithm='prim_official',
                **kwd_args):
     """
@@ -324,7 +331,7 @@ def dbcv_score(X, labels, metric='euclidean',
         The label array output by the clustering, providing an integral
         cluster label to each data point, with -1 for noise points.
 
-    metric : optional, string (default 'euclidean')
+    metric : optional, string (default 'sqeuclidean')
         The metric used to compute distances for the clustering (and
         to be re-used in computing distances for mr distance). If
         set to `precomputed` then X is assumed to be the precomputed
@@ -341,7 +348,7 @@ def dbcv_score(X, labels, metric='euclidean',
         value for the whole clustering.
 
     mst_raw_dist : optional, boolean (default False)
-        If True, the MST's are constructed solely via 'raw' distances (depending on the given metric, e.g. euclidean distances)
+        If True, the MST's are constructed solely via 'raw' distances (depending on the given metric, e.g. sqeuclidean distances)
         instead of using mutual reachability distances. Thus setting this parameter to True avoids using 'all-points-core-distances' at all.
         This is advantageous specifically in the case of elongated clusters that lie in close proximity to each other <citation needed>.
 
