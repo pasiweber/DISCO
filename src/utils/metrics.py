@@ -10,7 +10,7 @@ from src.Evaluation.DISCO.disco import disco_score as DISCO, only_noise_samples 
 from src.Evaluation.DC_DUNN.dc_dunn import dc_dunn_score as DC_DUNN
 
 # Competitors
-from src.Evaluation.DBCV.dbcv import dbcv_score as DBCV
+from src.Evaluation.DBCV.dbcv_new import validity_index as DBCV
 from src.Evaluation.DCSI.dcsi import dcsi_score as DCSI
 from src.Evaluation.S_Dbw.sdbw import sdbw_score as S_DBW
 from src.Evaluation.CDBW.cdbw import cdbw_score as CDBW
@@ -31,8 +31,8 @@ METRICS = {
     "DISCO": lambda X, l: DISCO(X, l),  ## min_pts
     # "DC_DUNN": DC_DUNN,
     ### Competitors
-    "DBCV": lambda X, l: DBCV(X, l),
-    "DBCV_sq": lambda X, l: DBCV(X, l, metric="sqeuclidean"),
+    "DBCV": lambda X, l: DBCV(X, l, metric="sqeuclidean"),
+    "DBCV_eucl": lambda X, l: DBCV(X, l, metric="euclidean"),
     "DCSI": lambda X, l: DCSI(X, l),  ## min_pts
     "LCCV": LCCV,
     "VIASCKDE": VIASCKDE,

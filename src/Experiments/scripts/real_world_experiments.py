@@ -15,7 +15,7 @@ os.environ["TZ"] = "Europe/Vienna"
 
 from datasets.real_world_datasets import Datasets as RealWorldDatasets
 from datasets.density_datasets import Datasets as DensityDatasets
-from src.utils.metrics import METRICS as ALL_METRICS
+from src.utils.metrics import METRICS
 from src.utils.experiments import insert_dict, exec_metric
 
 
@@ -24,13 +24,12 @@ TASK_TIMEOUT = 12 * 60 * 60  # 6 hours
 
 # del ALL_METRICS["CDBW"]
 # del ALL_METRICS["CVDD"]
-# del ALL_METRICS["LCCV"]
-# del ALL_METRICS["VIASCKDE"]
-
-METRICS = ALL_METRICS.copy()
+del METRICS["LCCV"]
+del METRICS["VIASCKDE"]
 
 
 if sys.argv[1] == "normal":
+    del METRICS["CDBW"]
     print("Use data without z-normalization\n")
     config = {
         "save_folder": "real_world",
@@ -41,9 +40,9 @@ if sys.argv[1] == "normal":
     }
     N_JOBS = 1
     RUNS = 1
-    del ALL_METRICS["CDBW"]
 
 elif sys.argv[1] == "standardized":
+    del METRICS["CDBW"]
     print("Use data with z-normalization\n")
     config = {
         "save_folder": "real_world_standardized",
@@ -54,7 +53,6 @@ elif sys.argv[1] == "standardized":
     }
     N_JOBS = 1
     RUNS = 1
-    del ALL_METRICS["CDBW"]
 
 
 elif sys.argv[1] == "density_normal":
@@ -148,7 +146,7 @@ def run(save_folder, dataset_names, dataset_id_dict, dataset_load_fn_dict, metri
             value, real_time, cpu_time = async_result.get()
             del async_results[async_idx]
 
-            print(add_time(f"Finished - Dataset: {dataset_name}, Run: {run}, Metric: {metric_name}"))
+            print(add_time(f"Finished - Dataset: {dataset_name}, Run: {run}, Metric: {metric_name} - {value}"))
             eval_results = defaultdict(list)
             insert_dict(
                 eval_results,
