@@ -7,7 +7,8 @@ from hdbscan.hdbscan_ import isclose
 # from hdbscan.hdbscan_ import isclose, kruskal_mst_with_mutual_reachability
 from scipy.sparse.csgraph import minimum_spanning_tree
 
-
+def dbcv_score():
+    pass
 def all_points_core_distance(distance_matrix, d=2.0):
     """
     Compute the all-points-core-distance for all the points of a cluster.
@@ -50,23 +51,16 @@ def max_ratio(stacked_distances):
         for j in range(stacked_distances.shape[1]):
             dist = stacked_distances[i][j][0]
             coredist = stacked_distances[i][j][1]
-            if dist == 0 or coredist / dist <= max_ratio:
+            if dist == 0 or coredist/dist <= max_ratio:
                 continue
-            max_ratio = coredist / dist
+            max_ratio = coredist/dist
 
     return max_ratio
 
 
-def distances_between_points(
-    X,
-    labels,
-    cluster_id,
-    metric="sqeuclidean",
-    d=None,
-    no_coredist=False,
-    print_max_raw_to_coredist_ratio=False,
-    **kwd_args
-):
+def distances_between_points(X, labels, cluster_id,
+                                    metric='euclidean', d=None, no_coredist=False,
+                                    print_max_raw_to_coredist_ratio=False, **kwd_args):
     """
     Compute pairwise distances for all the points of a cluster.
 
@@ -127,7 +121,6 @@ def distances_between_points(
         subset_X = X[labels == cluster_id, :]
         distance_matrix = pairwise_distances(subset_X, metric=metric,
                                              **kwd_args)
-        ## check here
         d = X.shape[1]
 
     if no_coredist:
@@ -145,7 +138,7 @@ def distances_between_points(
         return stacked_distances.max(axis=-1), core_distances
 
 
-def internal_minimum_spanning_tree(mr_distances, algorithm):
+def internal_minimum_spanning_tree(mr_distances):
     """
     Compute the 'internal' minimum spanning tree given a matrix of mutual
     reachability distances. Given a minimum spanning tree the 'internal'
@@ -156,10 +149,8 @@ def internal_minimum_spanning_tree(mr_distances, algorithm):
     mr_distances : array (cluster_size, cluster_size)
         The pairwise mutual reachability distances, inferred to be the edge
         weights of a complete graph. Since MSTs are computed per cluster
-        this is the all-points-mutual-reachability for points within a single
+        this is the all-points-mutual-reacability for points within a single
         cluster.
-    algorithm: string (default = 'prim')
-        which algo for the SMT
 
     Returns
     -------
@@ -176,11 +167,16 @@ def internal_minimum_spanning_tree(mr_distances, algorithm):
     Moulavi, D., Jaskowiak, P.A., Campello, R.J., Zimek, A. and Sander, J.,
     2014. Density-Based Clustering Validation. In SDM (pp. 839-847).
     """
-
-    min_span_tree = None
-
-    if 'prim_official' in algorithm:
-        min_span_tree = matlab_prims_wrapper(mr_distances)
+    single_linkage_data = mst_linkage_core(mr_distances)
+    min_span_tree = single_linkage_data.copy()
+    for index, row in enumerate(min_span_tree[1:], 1):
+        candidates = np.where(isclose(mr_distances[int(row[1])], row[2]))[0]
+        candidates = np.intersect1d(candidates,
+                                    single_linkage_data[:index, :2].astype(
+                                        int))
+        candidates = candidates[candidates != row[1]]
+        assert len(candidates) > 0
+        row[0] = candidates[0]
 
     vertices = np.arange(mr_distances.shape[0])[
         np.bincount(min_span_tree.T[:2].flatten().astype(np.intp)) > 1]
@@ -189,8 +185,8 @@ def internal_minimum_spanning_tree(mr_distances, algorithm):
     # A little "fancy" we select from the flattened array reshape back
     # (Fortran format to get indexing right) and take the product to do an and
     # then convert back to boolean type.
-    edge_selection = np.prod(np.in1d(min_span_tree.T[:2], vertices).reshape(
-        (min_span_tree.shape[0], 2), order='F'), axis=1).astype(bool)
+    edge_selection = np.prod(
+        np.isin(min_span_tree.T[:2], vertices), axis=0).astype(bool)
 
     # Density sparseness is not well defined if there are no
     # internal edges (as per the referenced paper). However
@@ -206,13 +202,13 @@ def internal_minimum_spanning_tree(mr_distances, algorithm):
         # do nothing and return all the edges in the MST.
         edges = min_span_tree.copy()
 
-    return vertices, edges, len(vertices)
+    return vertices, edges
 
 
 def density_separation(X, labels, cluster_id1, cluster_id2,
                        internal_nodes1, internal_nodes2,
                        core_distances1, core_distances2,
-                       metric='sqeuclidean', no_coredist=False, **kwd_args):
+                       metric='euclidean', no_coredist=False, **kwd_args):
     """
     Compute the density separation between two clusters. This is the minimum
     distance between pairs of points, one from internal nodes of MSTs of each cluster.
@@ -292,9 +288,8 @@ def density_separation(X, labels, cluster_id1, cluster_id2,
         return mr_dist_matrix.min()
 
 
-def dbcv_score(X, labels, metric='sqeuclidean',
-               d=None, per_cluster_scores=False, mst_raw_dist=False, verbose=False, algorithm='prim_official',
-               **kwd_args):
+def validity_index(X, labels, metric='euclidean',
+                    d=None, per_cluster_scores=False, mst_raw_dist=False, verbose=False,  **kwd_args):
     """
     Compute the density based cluster validity index for the
     clustering specified by `labels` and for each cluster in `labels`.
@@ -310,7 +305,7 @@ def dbcv_score(X, labels, metric='sqeuclidean',
         The label array output by the clustering, providing an integral
         cluster label to each data point, with -1 for noise points.
 
-    metric : optional, string (default 'sqeuclidean')
+    metric : optional, string (default 'euclidean')
         The metric used to compute distances for the clustering (and
         to be re-used in computing distances for mr distance). If
         set to `precomputed` then X is assumed to be the precomputed
@@ -327,13 +322,9 @@ def dbcv_score(X, labels, metric='sqeuclidean',
         value for the whole clustering.
 
     mst_raw_dist : optional, boolean (default False)
-        If True, the MST's are constructed solely via 'raw' distances (depending on the given metric, e.g. sqeuclidean distances)
+        If True, the MST's are constructed solely via 'raw' distances (depending on the given metric, e.g. euclidean distances)
         instead of using mutual reachability distances. Thus setting this parameter to True avoids using 'all-points-core-distances' at all.
         This is advantageous specifically in the case of elongated clusters that lie in close proximity to each other <citation needed>.
-
-
-    algorithm: optional, string (default 'prim')
-        Which algo for the MS
 
     **kwd_args :
         Extra arguments to pass to the distance computation for other
@@ -356,36 +347,21 @@ def dbcv_score(X, labels, metric='sqeuclidean',
     Moulavi, D., Jaskowiak, P.A., Campello, R.J., Zimek, A. and Sander, J.,
     2014. Density-Based Clustering Validation. In SDM (pp. 839-847).
     """
-    # cluster labels
-    cluster_labels = np.unique(labels)
-    for i in range(len(cluster_labels)):
-        if np.sum(labels == cluster_labels[i]) == 1:
-            labels[labels == cluster_labels[i]] = -1
-            cluster_labels[i] = -1
-
-    clusters = np.setdiff1d(cluster_labels, -1)
-    if len(clusters) == 0 or len(clusters) == 1:
-        return 0, 0
-    O = X.shape[0]
-    X = X[labels != -1, :]
-    labels = labels[labels != -1]
-
-    cluster_labels, counts = np.unique(labels, return_counts=True)
-
     core_distances = {}
     density_sparseness = {}
     mst_nodes = {}
     mst_edges = {}
 
     max_cluster_id = labels.max() + 1
-    max_cluster_id = len(cluster_labels)
     density_sep = np.inf * np.ones((max_cluster_id, max_cluster_id),
                                    dtype=np.float64)
     cluster_validity_indices = np.empty(max_cluster_id, dtype=np.float64)
-    internal_mst_per_cluster = {}
-    for cluster_id in cluster_labels:
+
+    for cluster_id in range(max_cluster_id):
+
         if np.sum(labels == cluster_id) == 0:
             continue
+
         distances_for_mst, core_distances[
             cluster_id] = distances_between_points(
             X,
@@ -398,152 +374,53 @@ def dbcv_score(X, labels, metric='sqeuclidean',
             **kwd_args
         )
 
-        mst_nodes[cluster_id], mst_edges[cluster_id], len_internal_mst = \
-            internal_minimum_spanning_tree(distances_for_mst, algorithm)
+        mst_nodes[cluster_id], mst_edges[cluster_id] = \
+            internal_minimum_spanning_tree(distances_for_mst)
         density_sparseness[cluster_id] = mst_edges[cluster_id].T[2].max()
-        internal_mst_per_cluster['Number_Edges_Internal_{}'.format(cluster_id)] = len_internal_mst
-        internal_mst_per_cluster['Density_Sparseness_{}'.format(cluster_id)] = density_sparseness[cluster_id]
 
-    i = 0
-    for lab in cluster_labels:
-        if np.sum(labels == lab) == 0:
+    for i in range(max_cluster_id):
+
+        if np.sum(labels == i) == 0:
             continue
 
-        internal_nodes_i = mst_nodes[lab]
-        j = i+1
-        while j < len(cluster_labels):
-            lab_j = cluster_labels[j]
-            if np.sum(labels == lab_j) == 0:
+        internal_nodes_i = mst_nodes[i]
+        for j in range(i + 1, max_cluster_id):
+
+            if np.sum(labels == j) == 0:
                 continue
 
-            internal_nodes_j = mst_nodes[lab_j]
+            internal_nodes_j = mst_nodes[j]
             density_sep[i, j] = density_separation(
-                X, labels, lab, lab_j,
+                X, labels, i, j,
                 internal_nodes_i, internal_nodes_j,
-                core_distances[lab], core_distances[lab_j],
+                core_distances[i], core_distances[j],
                 metric=metric, no_coredist=mst_raw_dist,
                 **kwd_args
             )
             density_sep[j, i] = density_sep[i, j]
 
-            j = j+1
-        i = i+1
     n_samples = float(X.shape[0])
-    n_samples = O
     result = 0
-    i = 0
-    for lab in cluster_labels:
 
-        if np.sum(labels == lab) == 0:
+    for i in range(max_cluster_id):
+
+        if np.sum(labels == i) == 0:
             continue
 
         min_density_sep = density_sep[i].min()
-        numerator = min_density_sep - density_sparseness[lab]
-        # if numerator is zero we avoid division by zero
-        if float(numerator) is float(0):
-            cluster_validity_indices[i] = numerator
-        else:
-            cluster_validity_indices[i] = numerator / max(min_density_sep, density_sparseness[lab])
+        cluster_validity_indices[i] = (
+            (min_density_sep - density_sparseness[i]) /
+            max(min_density_sep, density_sparseness[i])
+        )
 
         if verbose:
             print("Minimum density separation: " + str(min_density_sep))
             print("Density sparseness: " + str(density_sparseness[i]))
-        internal_mst_per_cluster['Density_Separation_{}'.format(lab)] = min_density_sep
 
-        cluster_size = np.sum(labels == lab)
+        cluster_size = np.sum(labels == i)
         result += (cluster_size / n_samples) * cluster_validity_indices[i]
 
-        # if per_cluster_scores:
-        #    return result, cluster_validity_indices, internal_mst_per_cluster
-        # else:
-        #    return result, internal_mst_per_cluster
-        return result
-
-
-def find(parent, i):
-    if parent[i] == i:
-        return i
-    return find(parent, parent[i])
-
-
-def union(parent, rank, x, y):
-    xroot = find(parent, x)
-    yroot = find(parent, y)
-    if rank[xroot] < rank[yroot]:
-        parent[xroot] = yroot
-    elif rank[xroot] > rank[yroot]:
-        parent[yroot] = xroot
+    if per_cluster_scores:
+        return result, cluster_validity_indices
     else:
-        parent[yroot] = xroot
-        rank[xroot] += 1
-
-
-def matlab_prims_wrapper(mutual_reachability):
-    n_vertices = mutual_reachability.shape[0]
-    start = 0  # Starting vertex for Prim's algorithm
-
-    # Initialize the graph structure expected by the provided Prim's algorithm
-    G = {
-        "no_vertices": n_vertices,
-        "MST_parent": np.zeros(n_vertices, dtype=int),
-        "MST_edges": np.zeros((n_vertices - 1, 3)),
-        "MST_degrees": np.zeros(n_vertices, dtype=int)
-    }
-
-    # Replace np.inf with a large number for algorithm compatibility
-    max_weight = np.max(mutual_reachability[np.isfinite(mutual_reachability)]) + 1
-    G_edges_weights = np.where(mutual_reachability == np.inf, max_weight, mutual_reachability)
-
-    # Call the provided MST_Edges function with the prepared data
-    mst_edges, _ = MST_Edges(G, start, G_edges_weights)
-    return mst_edges
-
-
-def MST_Edges(G, start, G_edges_weights):
-    # Prims algorithm
-    d = []
-    intree = []
-    # initialize
-    for i in range(G["no_vertices"]):
-        intree.append(0)
-        d.append(np.inf)
-        G["MST_parent"][i] = int(i)
-
-    d[start] = 0
-    v = start
-    counter = -1
-    # count until we connected all nodes
-    while counter < G["no_vertices"] - 2:
-        # we add v to the 'visited'
-        intree[v] = 1
-        dist = np.inf
-        # for every node
-        for w in range(G["no_vertices"]):
-            # if the node is not already in the visited elements and is not the same as the one we want to check
-            if (w != v) & (intree[w] == 0):
-                # we look at the distance
-                weight = G_edges_weights[v, w]
-                # if the distance is smaller than the distance that connects w currently we update
-                if d[w] > weight:
-                    d[w] = weight
-                    G["MST_parent"][w] = int(v)
-                # if the distance is smaller than current dist we update dist
-                if dist > d[w]:
-                    dist = d[w]
-                    next_v = w
-        counter = counter + 1
-        outgoing = G["MST_parent"][next_v]
-        incoming = next_v
-        G["MST_edges"][counter, :] = [
-            outgoing,
-            incoming,
-            G_edges_weights[outgoing, incoming],
-        ]
-        G["MST_degrees"][G["MST_parent"][next_v]] = (
-                G["MST_degrees"][G["MST_parent"][next_v]] + 1
-        )
-        G["MST_degrees"][next_v] = G["MST_degrees"][next_v] + 1
-        v = next_v
-    Edg = G["MST_edges"]
-    Degr = G["MST_degrees"]
-    return Edg, Degr
+        return result

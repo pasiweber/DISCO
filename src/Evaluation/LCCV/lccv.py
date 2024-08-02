@@ -176,7 +176,7 @@ def lccv_score(X, labels):
 
     # lccv sum is needed to collect local-core wise results
     lccv_sum = 0
-
+    print(local_cores_in)
     # for each local core
     for i in local_cores:
         # get cluster for i (A)
@@ -188,7 +188,7 @@ def lccv_score(X, labels):
             # get number of local cores in cluster A
             n_l_A = len(local_core_in_A)
             # if there is only one local core in the cluster
-            if n_l_A == 1:
+            if n_l_A < 2:
                 lccv_sum += 0
             else:
                 # distances between i and every local core also belonging to the same cluster
@@ -200,6 +200,8 @@ def lccv_score(X, labels):
                 # for each label that is not A
                 for l in np.unique(labels):
                     if l != label:
+                        if len(local_cores_in[l]) < 1:
+                            continue
                         # include local core averaged distance to i
                         dists = [dist_matrix[i, j] for j in local_cores_in[l]]
                         cluster_wise_dists.append((1 / len(local_cores_in[l])) * sum(dists))
