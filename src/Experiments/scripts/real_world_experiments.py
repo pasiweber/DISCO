@@ -24,7 +24,9 @@ TASK_TIMEOUT = 12 * 60 * 60  # 6 hours
 
 # del ALL_METRICS["CDBW"]
 # del ALL_METRICS["CVDD"]
-del METRICS["LCCV"]
+# del METRICS["LCCV"]
+del METRICS["DBCV"]
+del METRICS["DBCV_eucl"]
 del METRICS["VIASCKDE"]
 
 
@@ -90,7 +92,7 @@ def exec_metric_(shared_objects, dataset_name, run, metric_name):
     try:
         return exec_metric(datasets[(dataset_name, run)], metrics[metric_name])
     except TimeoutError as e:
-        print(add_time(f"Timeout - Dataset: {dataset_name}, Run: {run}, Metric: {metric_name} - {e}"))
+        print(add_time(f"Timeout - Dataset: {dataset_name}, Run: {run}, Metric: {metric_name} - `{e}`"))
     except Exception as e:
         print(add_time(f"Error - Dataset: {dataset_name}, Run: {run}, Metric: {metric_name} - `{e}`"))
     return np.nan, np.nan, np.nan
@@ -146,7 +148,7 @@ def run(save_folder, dataset_names, dataset_id_dict, dataset_load_fn_dict, metri
             value, real_time, cpu_time = async_result.get()
             del async_results[async_idx]
 
-            print(add_time(f"Finished - Dataset: {dataset_name}, Run: {run}, Metric: {metric_name} - {value}"))
+            print(add_time(f"Finished - Dataset: {dataset_name}, Run: {run}, Metric: {metric_name} - `{value}`"))
             eval_results = defaultdict(list)
             insert_dict(
                 eval_results,
@@ -162,7 +164,7 @@ def run(save_folder, dataset_names, dataset_id_dict, dataset_load_fn_dict, metri
             path = f"{RESULTS_PATH}{save_folder}/{dataset_id_dict[dataset_name]}/{metric_name}_{run}.csv"
             os.makedirs(os.path.dirname(path), exist_ok=True)
             df = pd.DataFrame(data=eval_results)
-            if value != np.nan:
+            if value != np.nan and value != float("nan"):
                 df.to_csv(path, index=False)
 
     print(add_time("-----"))

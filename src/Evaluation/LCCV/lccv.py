@@ -176,7 +176,7 @@ def lccv_score(X, labels):
 
     # lccv sum is needed to collect local-core wise results
     lccv_sum = 0
-    print(local_cores_in)
+    # print(local_cores_in)
     # for each local core
     for i in local_cores:
         # get cluster for i (A)

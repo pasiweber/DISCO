@@ -38,7 +38,9 @@ def disco_samples(
         labels_ = labels.copy()
         labels_[labels_ == -1] = np.arange(-1, -len(labels_[labels_ == -1]) - 1, -1)
         disco_values = only_disco_samples(dc_distances, labels_)
-        disco_values[labels == -1] = np.minimum(*only_noise_samples(X, labels, min_points, dc_distances))
+        disco_values[labels == -1] = np.minimum(
+            *only_noise_samples(X, labels, min_points, dc_distances)
+        )
         return disco_values
     # More then one cluster with optional noise
     else:
@@ -47,17 +49,25 @@ def disco_samples(
         disco_values[labels != -1] = only_disco_samples(
             dc_distances[np.ix_(labels != -1, labels != -1)], labels[labels != -1]
         )
-        disco_values[labels == -1] = np.minimum(*only_noise_samples(X, labels, min_points, dc_distances))
+        disco_values[labels == -1] = np.minimum(
+            *only_noise_samples(X, labels, min_points, dc_distances)
+        )
         return disco_values
 
 
-def only_disco_samples(dc_distances: np.ndarray, labels: np.ndarray) -> np.ndarray:
+def only_disco_samples(
+    dc_distances: np.ndarray,
+    labels: np.ndarray,
+) -> np.ndarray:
     if len(dc_distances) == 0:
         raise ValueError("Can't calculate DISCO score for empty dataset.")
     elif dc_distances.shape[0] != dc_distances.shape[1]:
         raise ValueError("dc_distances needs to be a distance matrix.")
     elif len(dc_distances) != len(labels):
         raise ValueError("Dataset size differs from label size.")
+
+    if len(dc_distances) == 1:
+        return np.array([0])
 
     # DISCO evaluation per non noise sample
     DISCO_evaluations = silhouette_samples(
@@ -332,7 +342,7 @@ def check_number_of_labels(n_labels, n_samples):
     n_samples : int
         Number of samples.
     """
-    if not 1 < n_labels < n_samples:
+    if not 1 < n_labels <= n_samples:
         raise ValueError(
             "Number of labels is %d. Valid values are 2 to n_samples - 1 (inclusive)" % n_labels
         )

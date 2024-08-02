@@ -59,6 +59,8 @@ def plot_lineplot(
     order=SELECTED_METRICS,
     x_range=(None, None),
     y_range=(None, None),
+    x_label=None,
+    y_label=None,
     # figsize=(15, 5),
     # figsize=(9, 4),
     figsize=(10, 6),
@@ -66,6 +68,7 @@ def plot_lineplot(
     # errorbar="se",
     errorbar=("ci", 75),
     highlight=1,
+    highlight_size=2,
     red_legend_lables=[],
     metric_abbrev=METRIC_ABBREV,
     font_size=16,
@@ -81,6 +84,14 @@ def plot_lineplot(
         layout="tight",
     )
     highlight -= 1
+
+    if x_label is not None:
+        df = df.rename(columns={x_axis: x_label})
+        x_axis = x_label
+
+    if y_label is not None:
+        df = df.rename(index={y_axis: y_label})
+        y_axis = y_label
 
     if order is None:
         order = list(df[grouping].unique())
@@ -98,7 +109,7 @@ def plot_lineplot(
 
     markers = ["o"] + repeat(["v", "^", "<", ">", "p", "P", "X", "d", "D", "H"])
     palette = ["black"] + repeat(sns.color_palette("bright"))
-    sizes = [2] + repeat([1])
+    sizes = [highlight_size] + repeat([1])
     dashes = [(1, 0)] + repeat([(1, 2), (5, 2), (3, 3, 1, 3)])
 
     ax = sns.lineplot(
