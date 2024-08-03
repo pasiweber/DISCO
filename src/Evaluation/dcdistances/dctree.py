@@ -151,6 +151,7 @@ class DCTree:
         self,
         points: np.ndarray,
         min_points: int = 5,
+        min_points_mr: Optional[int] = None,
         access_method: str = "tree",
         no_fastindex: bool = False,
         use_less_memory: bool = False,
@@ -161,6 +162,9 @@ class DCTree:
         self.min_points = min_points
         self.access_method = access_method
         self.no_fastindex = no_fastindex
+
+        if min_points_mr is None:
+            min_points_mr = min_points
 
         if n_jobs is None or n_jobs == 0:
             self.n_jobs = cpu_count()
@@ -174,8 +178,9 @@ class DCTree:
             mst_edges = self._get_mst_edges(points, use_less_memory=True)
         else:
             if not precomputed:
-                reach_dists = calculate_reachability_distance(points, min_points)
-            else: reach_dists = points
+                reach_dists = calculate_reachability_distance(points, min_points_mr)
+            else:
+                reach_dists = points
             mst_edges = self._get_mst_edges(reach_dists)
             if not precomputed:
                 del reach_dists
@@ -255,8 +260,10 @@ class DCTree:
         if self.root is None:
             return ""
 
-        pointer_right = "└──"
-        pointer_left = "├──" if self.root.right else "└──"
+        # pointer_right = "└──"
+        # pointer_left = "├──" if self.root.right else "└──"
+        pointer_right = "   "
+        pointer_left = "   " if self.root.right else "   "
         return (
             f"{self.root}"
             f"{self.__repr__help(self.root.left, pointer_left, '', self.root.right is not None)}"
@@ -269,13 +276,18 @@ class DCTree:
         if node is None:
             return ""
 
-        padding_for_both = padding + ("|  " if has_right_sibling else "   ")
-        pointer_right = "└──"
-        pointer_left = "├──" if node.right else "└──"
+        # padding_for_both = padding + ("|  " if has_right_sibling else "   ")
+        # pointer_right = "└──"
+        # pointer_left = "├──" if node.right else "└──"
+        padding_for_both = padding + ("   " if has_right_sibling else "   ")
+        pointer_right = "   "
+        pointer_left = "   " if node.right else "   "
         return (
+            f"\n   {padding.replace("|", " ")}// #region"
             f"\n{padding}{pointer}{node}"
             f"{self.__repr__help(node.left, pointer_left, padding_for_both, node.right is not None)}"
             f"{self.__repr__help(node.right, pointer_right, padding_for_both, False)}"
+            f"\n   {padding.replace("|", " ")}// #endregion"
         )
 
     def dc_dist(self, i: int, j: int) -> np.float64:
@@ -421,18 +433,24 @@ class DCTree:
         union_find = _UnionFind(self.n)
         node = _DCNode(id=0, dist=None, leaves=[0])
         idx = self.n
+        k = len(mst_edges)
         for i, j, dist in mst_edges:
             i_root = union_find.find(i)
             j_root = union_find.find(j)
             node = _DCNode(
                 id=idx,
                 dist=dist,
+                k=-1 if (len(i_root.leaves) + len(j_root.leaves)) < self.min_points else k,
                 left=i_root,
                 right=j_root,
                 leaves=i_root.leaves + j_root.leaves,
             )
+            i_root.parent = node
+            j_root.parent = node
             union_find.union(i, j, node)
             idx += 1
+            if not node.k == -1:
+                k -= 1
         return node
 
     def _euler_tour(self, root: _DCNode):
@@ -466,6 +484,132 @@ class DCTree:
                 self.level[pos] = level
                 pos += 1
 
+    def traverse_remove_noise_(self, node):
+        if node is None:
+            return None
+
+        if node.left.k == -1 and node.right.k == -1:
+            return node
+
+        if node.left.k == -1 and node.right.k != -1:
+            right = self.traverse_remove_noise_(node.right)
+            return _DCNode(node.id, node.dist, node.leaves, right.left, right.right, node.parent, node.k)
+
+        if node.left.k != -1 and node.right.k == -1:
+            left = self.traverse_remove_noise_(node.left)
+            return _DCNode(node.id, node.dist, node.leaves, left.left, left.right, node.parent, node.k)
+
+        if node.left.k != -1  and node.right.k != -1:
+            return node
+
+    def get_edges(self, root):
+        edges = []
+        stack: deque[_DCNode] = deque([root])
+        while len(stack):
+            node = stack.pop()
+
+            if node.k == -1:
+                continue
+
+            edges.append((node.left.id, node.right.id, node.dist))
+            stack.append(node.left)
+            stack.append(node.right)
+        e = np.unique(np.hstack((np.array(edges)[:, 0], np.array(edges)[:, 1])))
+        max_cluster_id = len(e)
+        labels_set = e
+        lookup_cluster = dict(zip(labels_set, range(max_cluster_id)))
+        sort_idx = np.argsort(list(lookup_cluster.keys()))
+        idx = np.searchsorted(list(lookup_cluster.keys()), np.array(edges)[:, 0], sorter=sort_idx)
+        i = np.asarray(list(lookup_cluster.values()))[sort_idx][idx]
+        idx = np.searchsorted(list(lookup_cluster.keys()), np.array(edges)[:, 1], sorter=sort_idx)
+        j = np.asarray(list(lookup_cluster.values()))[sort_idx][idx]
+        edges = np.array(edges)
+        edges[:,0] = i
+        edges[:,1] = j
+        o = np.empty(len(edges), dtype=([("i", int), ("j", int), ("dist", float)]))
+        o[:] = list(zip(edges[:, 0], edges[:, 1], edges[:, 2]))
+        return o
+
+    def build_new_tree(self):
+        self.traverse_remove_noise_(self.root)
+        self.root = self._build_tree(self.get_edges(self.root))
+        self.traverse_remove_noise(self.root, self.root, True, self.root.k, 0)
+
+    def traverse_remove_noise(self, node, parent_node, left, k, remove):
+        if node.left.k == -1 and node.right.k == -1:
+            return
+        elif node.left.k != -1 and node.right.k == -1:
+            remove += 1
+            # node.left.k = node.k
+            # if left:
+            #     parent_node.left.k -= 1
+            # else:
+            #     parent_node.right.k -= 1
+            node.left.k -= remove
+            self.traverse_remove_noise(node.left, parent_node, left, k, remove)
+        elif node.left.k == -1 and node.right.k != -1:
+            # node.right.k = node.k
+            # if left:
+            #     parent_node.left.k -= 1
+            # else:
+            #     parent_node.right.k -= 1
+            remove += 1
+            node.left.k -= remove
+            self.traverse_remove_noise(node.right, parent_node, left, k, remove)
+        elif node.left.k != -1 and node.right.k != -1:
+            self.traverse_remove_noise(node.left, node, True, k, remove)
+            self.traverse_remove_noise(node.right, node, False, k, remove)
+        node.k -= k - 1
+
+    def traverse_until_k(self, k):
+        result_nodes = set([self.root])
+        if k == 1:
+            return result_nodes
+
+        stack: deque[Tuple[Optional[_DCNode], _DCNode, bool]] = deque([(self.root, self.root, False)])
+        while len(stack):
+            node, parent_node, left = stack.pop()
+            # print(node.k, [node.k for (node,_,_) in stack], flush=True)
+
+            if node is None:
+                return
+
+            if node.k >= 0:
+                if node.left.k != -1:
+                    result_nodes.discard(node)
+                    result_nodes.add(node.left)
+                    stack.append((node.left, node, True))
+                if node.right.k != -1:
+                    result_nodes.discard(node)
+                    result_nodes.add(node.right)
+                    stack.append((node.right, node, False))
+
+                # if not left and parent_node.left.k != -1:
+                #     result_nodes.discard(parent_node)
+                #     result_nodes.add(parent_node.left)
+                # if left and parent_node.right.k != -1:
+                #     result_nodes.discard(parent_node)
+                #     result_nodes.add(parent_node.right)
+
+            if len(result_nodes) >= k:
+                break
+
+        return result_nodes
+
+    def get_k_center(self, k):
+        nodes = self.traverse_until_k(k)
+        print(nodes)
+        labels = np.full(self.n, -1)
+        for i, node in enumerate(nodes):
+            labels[np.array(node.leaves)] = i
+        return labels
+
+    def get_eps_for_k(self, k, eps=3e-6):
+        nodes = self.traverse_until_k(k)
+        min_eps = np.inf
+        for node in nodes:
+            min_eps = min(min_eps, node.parent.dist)
+        return min_eps + eps
 
 def _serialize(root: _DCNode):
     tree_list = []
@@ -625,6 +769,8 @@ class _DCNode:
     leaves: List[int]
     left: Optional[_DCNode]
     right: Optional[_DCNode]
+    parent: _DCNode
+    k: int
 
     def __init__(
         self,
@@ -633,15 +779,22 @@ class _DCNode:
         leaves: List[int],
         left: Optional[_DCNode] = None,
         right: Optional[_DCNode] = None,
+        parent = None,
+        k = -1,
     ):
         self.id = id
         self.dist = dist
         self.leaves = leaves
         self.left = left
         self.right = right
+        if not parent:
+            self.parent = self
+        else:
+            self.parent = parent
+        self.k = k
 
     def __repr__(self):
-        return f"DCNode #{self.id} ({self.dist})"
+        return f"DCNode #{self.id} ({self.dist}) - {self.k}"
 
 
 class _UnionFind:
