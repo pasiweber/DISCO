@@ -84,6 +84,30 @@ def only_noise_samples(
     min_points: int = 5,
     dc_distances: np.ndarray | None = None,
 ) -> tuple[np.ndarray, np.ndarray]:
+    """TODO
+    Parameters
+    ----------
+    X : np.ndarray
+        _description_
+    labels : np.ndarray
+        _description_
+    min_points : int, optional
+        _description_, by default 5
+    dc_distances : np.ndarray | None, optional
+        _description_, by default None
+
+    Returns
+    -------
+    tuple[np.ndarray, np.ndarray]
+        (core_prop, dc_prop)
+
+    Raises
+    ------
+    ValueError
+        _description_
+    ValueError
+        _description_
+    """
     if len(X) == 0:
         raise ValueError("Can't calculate noise score for empty dataset.")
     elif len(X) != len(labels):

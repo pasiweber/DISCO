@@ -166,7 +166,7 @@ def internal_minimum_spanning_tree(mr_distances):
     Moulavi, D., Jaskowiak, P.A., Campello, R.J., Zimek, A. and Sander, J.,
     2014. Density-Based Clustering Validation. In SDM (pp. 839-847).
     """
-    single_linkage_data = mst_linkage_core(mr_distances)
+    single_linkage_data = mst_linkage_core(mr_distances.astype(np.double))
     min_span_tree = single_linkage_data.copy()
     for index, row in enumerate(min_span_tree[1:], 1):
         candidates = np.where(isclose(mr_distances[int(row[1])], row[2]))[0]
@@ -398,7 +398,7 @@ def validity_index(
         )
 
         mst_nodes[cluster_id], mst_edges[cluster_id] = internal_minimum_spanning_tree(
-            distances_for_mst
+            distances_for_mst.astype(np.double)
         )
         density_sparseness[cluster_id] = mst_edges[cluster_id].T[2].max()
 
@@ -438,6 +438,7 @@ def validity_index(
             continue
 
         min_density_sep = density_sep[i].min()
+        # print(min_density_sep, density_sparseness[i], min_density_sep, density_sparseness[i])
         cluster_validity_indices[i] = (min_density_sep - density_sparseness[i]) / max(
             min_density_sep, density_sparseness[i]
         )

@@ -9,6 +9,7 @@ imgs
 results/**/*.csv
 latex/
 latex
+clusterings/
 
 *.log
 *.err

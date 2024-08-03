@@ -69,6 +69,28 @@ METRIC_ABBREV_OLD = {
     # "CH": "CH (↑)",
 }
 
+
+METRIC_ABBREV_PLAIN = {
+    "DISCO": "DISCO",
+    # "DC_DUNN": r"DC_DUNN ($\\uparrow$)",
+    ### Competitors
+    "DBCV": "DBCV",
+    "DCSI": "DCSI",
+    "LCCV": "LCCV",
+    "VIASCKDE": "VIAS.",
+    "CVDD": "CVDD",
+    "CDBW": "CDbw",
+    "CVNN": "CVNN",
+    # "DSI": "DSI (↥)",
+    ### Gauss
+    "S_DBW": "S_Dbw",
+    "SILHOUETTE": "Silh.",
+    # "DUNN": "DUNN (↑)",
+    # "DB": "DB (⇅)",
+    # "CH": "CH (↑)",
+}
+
+
 METRIC_ABBREV = {
     "DISCO": "DISCO",
     # "DC_DUNN": r"DC_DUNN ($\\uparrow$)",
