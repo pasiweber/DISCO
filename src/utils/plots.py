@@ -94,11 +94,12 @@ def plot_lineplot(
         df = df.rename(index={y_axis: y_label})
         y_axis = y_label
 
-    if order is None:
-        order = list(df[grouping].unique())
-    for metric in order.copy():
-        if metric not in df[grouping].unique():
-            order.remove(metric)
+    if grouping is not None:
+        if order is None:
+            order = list(df[grouping].unique())
+        for metric in order.copy():
+            if metric not in df[grouping].unique():
+                order.remove(metric)
 
     highlight_index = (
         [highlight] + list(range(0, highlight)) + list(range(highlight + 1, len(order)))
