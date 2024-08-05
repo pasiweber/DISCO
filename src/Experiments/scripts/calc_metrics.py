@@ -7,7 +7,7 @@ sys.path.append(DISCO_ROOT_PATH)
 from datasets.real_world_datasets import Datasets as RealWorldDatasets
 from datasets.density_datasets import Datasets as DensityDatasets
 from src.utils.metrics import METRICS
-from ._calc_multiple_experiments import run_multiple_experiments
+from src.Experiments.scripts._calc_multiple_experiments import run_multiple_experiments
 
 
 RESULTS_PATH = f"{DISCO_ROOT_PATH}/results/"

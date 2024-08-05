@@ -18,11 +18,11 @@ def optimal_k_dbscan(X, l):
 
     l_ = np.full(len(l), -1)
 
-    for k in range(2, len(set(l)) + 2):
+    for k in range(1, len(set(l)) + 2):
         eps = dctree.get_eps_for_k(k)
         l_dbscan = DBSCAN(eps).fit(X).labels_
         l_kcenter = dctree.get_k_center(k)
-        if ARI(l_dbscan, l_kcenter) < 0.98:
+        if ARI(l_dbscan, l_kcenter) > 0.5 and ARI(l_dbscan, l_kcenter) < 0.97:
             break
         l_ = l_dbscan
     return l_
