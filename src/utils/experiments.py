@@ -3,6 +3,8 @@ import time
 import os
 import sys
 import pickle
+import psutil
+
 
 parent_folder = os.path.dirname(os.path.abspath("./"))
 sys.path.append(parent_folder)
@@ -40,15 +42,25 @@ def merge_dicts(dict1, dict2):
         dict1[key] += value
 
 
-def exec_metric(data, metric_fn, args=[], kwargs={}):
-    """Calculate evaluation measures for given metric function and given dataset with data `X` and labels `l`."""
+def process_memory():
+    process = psutil.Process(os.getpid())
+    mem = process.memory_info().rss
+    for child in process.children(recursive=True):
+        mem += child.memory_info().rss
+    return mem
+
+
+def exec_func(data, fn, args=[], kwargs={}):
+    """Runs function for given dataset with data `X` and labels `l`."""
 
     start_time = time.time()
     start_process_time = time.process_time()
-    value = metric_fn(*data, *args, **kwargs)
+    mem_before = process_memory()
+    value = fn(*data, *args, **kwargs)
+    mem_after = process_memory()
     end_process_time = time.process_time()
     end_time = time.time()
-    return value, end_time - start_time, end_process_time - start_process_time
+    return value, end_time - start_time, end_process_time - start_process_time, mem_after - mem_before
 
 
 def calc_eval_measures(X, l, name=None, metrics=METRICS, runs=10, n_jobs=32, task_timeout=None):
@@ -69,13 +81,13 @@ def calc_eval_measures(X, l, name=None, metrics=METRICS, runs=10, n_jobs=32, tas
         for metric_name, metric_fn in metrics.items():
             async_idx = (run, metric_name)
             async_results[async_idx] = pool.apply_async(
-                exec_metric, args=((X_, l_), metric_fn), task_timeout=task_timeout
+                exec_func, args=((X_, l_), metric_fn), task_timeout=task_timeout
             )
 
     eval_results = defaultdict(list)
     for async_idx, async_result in async_results.items():
         (run, metric_name) = async_idx
-        value, real_time, cpu_time = async_result.get()
+        value, real_time, cpu_time, mem_usage = async_result.get()
         insert_dict(
             eval_results,
             {
@@ -85,6 +97,7 @@ def calc_eval_measures(X, l, name=None, metrics=METRICS, runs=10, n_jobs=32, tas
                 "value": value,
                 "time": real_time,
                 "process_time": cpu_time,
+                "mem_usage": mem_usage,
             },
         )
 
@@ -112,13 +125,13 @@ def calc_eval_measures_for_multiple_datasets(
             for metric_name, metric_fn in metrics.items():
                 async_idx = (param_value, run, metric_name)
                 async_results[async_idx] = pool.apply_async(
-                    exec_metric, args=((X, l), metric_fn), task_timeout=task_timeout
+                    exec_func, args=((X, l), metric_fn), task_timeout=task_timeout
                 )
 
     eval_results = defaultdict(list)
     for async_idx, async_result in async_results.items():
         (param_value, run, metric_name) = async_idx
-        value, real_time, cpu_time = async_result.get()
+        value, real_time, cpu_time, mem_usage = async_result.get()
         insert_dict(
             eval_results,
             {
@@ -128,6 +141,7 @@ def calc_eval_measures_for_multiple_datasets(
                 "value": value,
                 "time": real_time,
                 "process_time": cpu_time,
+                "mem_usage": mem_usage,
             },
         )
 

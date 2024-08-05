@@ -4,7 +4,7 @@ from .CVNN.cvnn import cvnn_score
 from .DBCV.dbcv_new import validity_index as dbcv_score
 from .DC_DUNN.dc_dunn import dc_dunn_score
 from .DCSI.dcsi import dcsi_score
-from .DISCO.disco import disco_score, disco_samples
+from .DISCO.disco import disco_score, disco_samples, only_noise_samples as disco_noise_samples
 from .DSI.dsi import dsi_score
 from .DUNN.dunn import dunn_score
 from .LCCV.lccv import lccv_score
@@ -21,6 +21,7 @@ __all__ = [
     "dcsi_score",
     "disco_score",
     "disco_samples",
+    "disco_noise_samples",
     "dsi_score",
     "dunn_score",
     "lccv_score",

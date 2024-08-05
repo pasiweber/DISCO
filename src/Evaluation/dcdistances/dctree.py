@@ -151,6 +151,7 @@ class DCTree:
         self,
         points: np.ndarray,
         min_points: int = 5,
+        min_points_mr: Optional[int] = None,
         access_method: str = "tree",
         no_fastindex: bool = False,
         use_less_memory: bool = False,
@@ -161,6 +162,9 @@ class DCTree:
         self.min_points = min_points
         self.access_method = access_method
         self.no_fastindex = no_fastindex
+
+        if min_points_mr is None:
+            min_points_mr = min_points
 
         if n_jobs is None or n_jobs == 0:
             self.n_jobs = cpu_count()
@@ -174,8 +178,9 @@ class DCTree:
             mst_edges = self._get_mst_edges(points, use_less_memory=True)
         else:
             if not precomputed:
-                reach_dists = calculate_reachability_distance(points, min_points)
-            else: reach_dists = points
+                reach_dists = calculate_reachability_distance(points, min_points_mr)
+            else:
+                reach_dists = points
             mst_edges = self._get_mst_edges(reach_dists)
             if not precomputed:
                 del reach_dists
@@ -255,8 +260,10 @@ class DCTree:
         if self.root is None:
             return ""
 
-        pointer_right = "└──"
-        pointer_left = "├──" if self.root.right else "└──"
+        # pointer_right = "└──"
+        # pointer_left = "├──" if self.root.right else "└──"
+        pointer_right = "   "
+        pointer_left = "   " if self.root.right else "   "
         return (
             f"{self.root}"
             f"{self.__repr__help(self.root.left, pointer_left, '', self.root.right is not None)}"
@@ -269,13 +276,18 @@ class DCTree:
         if node is None:
             return ""
 
-        padding_for_both = padding + ("|  " if has_right_sibling else "   ")
-        pointer_right = "└──"
-        pointer_left = "├──" if node.right else "└──"
+        # padding_for_both = padding + ("|  " if has_right_sibling else "   ")
+        # pointer_right = "└──"
+        # pointer_left = "├──" if node.right else "└──"
+        padding_for_both = padding + ("   " if has_right_sibling else "   ")
+        pointer_right = "   "
+        pointer_left = "   " if node.right else "   "
         return (
+            f"\n   {padding.replace("|", " ")}// #region"
             f"\n{padding}{pointer}{node}"
             f"{self.__repr__help(node.left, pointer_left, padding_for_both, node.right is not None)}"
             f"{self.__repr__help(node.right, pointer_right, padding_for_both, False)}"
+            f"\n   {padding.replace("|", " ")}// #endregion"
         )
 
     def dc_dist(self, i: int, j: int) -> np.float64:
@@ -421,18 +433,24 @@ class DCTree:
         union_find = _UnionFind(self.n)
         node = _DCNode(id=0, dist=None, leaves=[0])
         idx = self.n
+        k = len(mst_edges)
         for i, j, dist in mst_edges:
             i_root = union_find.find(i)
             j_root = union_find.find(j)
             node = _DCNode(
                 id=idx,
                 dist=dist,
+                k=-1 if (len(i_root.leaves) + len(j_root.leaves)) < self.min_points else k,
                 left=i_root,
                 right=j_root,
                 leaves=i_root.leaves + j_root.leaves,
             )
+            i_root.parent = node
+            j_root.parent = node
             union_find.union(i, j, node)
             idx += 1
+            if not node.k == -1:
+                k -= 1
         return node
 
     def _euler_tour(self, root: _DCNode):
@@ -466,6 +484,59 @@ class DCTree:
                 self.level[pos] = level
                 pos += 1
 
+    def traverse_until_k(self, k):
+        from queue import PriorityQueue
+
+        result_nodes = set([self.root])
+        if k == 1:
+            return result_nodes
+
+        stack = PriorityQueue()
+        stack.put((-self.root.dist, self.root, self.root))
+        while not stack.empty():
+            _, node, parent_node = stack.get()
+
+            if node is None:
+                return
+
+            if node.k >= 0:
+                if node.left.k != -1:
+                    if node.left.k != -1 and node.right.k != -1:
+                        result_nodes.discard(parent_node)
+                        result_nodes.discard(node)
+                        result_nodes.add(node.left)
+                    if node.parent.left.k == -1 or node.parent.right.k == -1:
+                        stack.put((-node.left.dist, node.left, parent_node))
+                    else:
+                        stack.put((-node.left.dist, node.left, node))
+                if node.right.k != -1:
+                    if node.left.k != -1 and node.right.k != -1:
+                        result_nodes.discard(parent_node)
+                        result_nodes.discard(node)
+                        result_nodes.add(node.right)
+                    if node.parent.left.k == -1 or node.parent.right.k == -1:
+                        stack.put((-node.right.dist, node.right, parent_node))
+                    else:
+                        stack.put((-node.right.dist, node.right, node))
+
+            if len(result_nodes) >= k:
+                break
+
+        return result_nodes
+
+    def get_k_center(self, k):
+        nodes = self.traverse_until_k(k)
+        labels = np.full(self.n, -1)
+        for i, node in enumerate(nodes):
+            labels[np.array(node.leaves)] = i
+        return labels
+
+    def get_eps_for_k(self, k, eps=-3e-12):
+        nodes = self.traverse_until_k(k)
+        min_eps = np.inf
+        for node in nodes:
+            min_eps = min(min_eps, node.parent.dist)
+        return min_eps + eps
 
 def _serialize(root: _DCNode):
     tree_list = []
@@ -625,6 +696,8 @@ class _DCNode:
     leaves: List[int]
     left: Optional[_DCNode]
     right: Optional[_DCNode]
+    parent: _DCNode
+    k: int
 
     def __init__(
         self,
@@ -633,15 +706,25 @@ class _DCNode:
         leaves: List[int],
         left: Optional[_DCNode] = None,
         right: Optional[_DCNode] = None,
+        parent = None,
+        k = -1,
     ):
         self.id = id
         self.dist = dist
         self.leaves = leaves
         self.left = left
         self.right = right
+        if not parent:
+            self.parent = self
+        else:
+            self.parent = parent
+        self.k = k
 
     def __repr__(self):
-        return f"DCNode #{self.id} ({self.dist})"
+        return f"DCNode #{self.id} ({self.dist}) - {self.k}"
+
+    def __lt__(self, other):
+        return self.dist < other.dist
 
 
 class _UnionFind:

@@ -13,6 +13,7 @@ def plot_datasets(
     n_cols=None,
     figsize=2.0,
     dpi=200,
+    cmap=None,
 ):
     """Plots all datasets in data with corresponding param_value as title.
     `fig_x` columns and `fig_y` rows.
@@ -46,7 +47,7 @@ def plot_datasets(
         ax.set_yticks([])
         ax.set_title(f"{param_values[param_value]}")
         X, l = data[param_value][0]
-        ax.scatter(X[:, 0], X[:, 1], s=1, c=l)
+        ax.scatter(X[:, 0], X[:, 1], s=1, c=l, cmap=cmap)
 
     return fig
 
@@ -59,6 +60,8 @@ def plot_lineplot(
     order=SELECTED_METRICS,
     x_range=(None, None),
     y_range=(None, None),
+    x_label=None,
+    y_label=None,
     # figsize=(15, 5),
     # figsize=(9, 4),
     figsize=(10, 6),
@@ -66,6 +69,7 @@ def plot_lineplot(
     # errorbar="se",
     errorbar=("ci", 75),
     highlight=1,
+    highlight_size=2,
     red_legend_lables=[],
     metric_abbrev=METRIC_ABBREV,
     font_size=16,
@@ -82,11 +86,20 @@ def plot_lineplot(
     )
     highlight -= 1
 
-    if order is None:
-        order = list(df[grouping].unique())
-    for metric in order.copy():
-        if metric not in df[grouping].unique():
-            order.remove(metric)
+    if x_label is not None:
+        df = df.rename(columns={x_axis: x_label})
+        x_axis = x_label
+
+    if y_label is not None:
+        df = df.rename(index={y_axis: y_label})
+        y_axis = y_label
+
+    if grouping is not None:
+        if order is None:
+            order = list(df[grouping].unique())
+        for metric in order.copy():
+            if metric not in df[grouping].unique():
+                order.remove(metric)
 
     highlight_index = (
         [highlight] + list(range(0, highlight)) + list(range(highlight + 1, len(order)))
@@ -98,7 +111,7 @@ def plot_lineplot(
 
     markers = ["o"] + repeat(["v", "^", "<", ">", "p", "P", "X", "d", "D", "H"])
     palette = ["black"] + repeat(sns.color_palette("bright"))
-    sizes = [2] + repeat([1])
+    sizes = [highlight_size] + repeat([1])
     dashes = [(1, 0)] + repeat([(1, 2), (5, 2), (3, 3, 1, 3)])
 
     ax = sns.lineplot(

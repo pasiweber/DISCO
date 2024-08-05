@@ -9,7 +9,11 @@ imgs
 results/**/*.csv
 latex/
 latex
+clusterings/
+clustering_results/
+clustering_results2/
 
+.nfs*
 *.log
 *.err
 

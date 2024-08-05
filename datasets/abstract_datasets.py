@@ -42,6 +42,30 @@ class AbstractDatasets(Enum):
         """Returns (X, l), with X standardized and caches (X, l)"""
         return load_and_cache_dataset(f"{self.id}_z", lambda self=self: self.standardized_data)
 
+    @property
+    def data_no_noise(self) -> tuple:
+        """Returns (X, l)"""
+        X, l = self.load_dataset()
+        return X[l != -1], l[l != -1]
+
+    @property
+    def standardized_data_no_noise(self) -> tuple:
+        """Returns (X, l), with X standardized"""
+        X, l = self.standardize_dataset(*self.data)
+        return X[l != -1], l[l != -1]
+
+    @property
+    def data_cached_no_noise(self) -> tuple:
+        """Returns (X, l) and caches (X, l)"""
+        X, l = load_and_cache_dataset(self.id, lambda self=self: self.data)
+        return X[l != -1], l[l != -1]
+
+    @property
+    def standardized_data_cached_no_noise(self) -> tuple:
+        """Returns (X, l), with X standardized and caches (X, l)"""
+        X, l = load_and_cache_dataset(f"{self.id}_z", lambda self=self: self.standardized_data)
+        return X[l != -1], l[l != -1]
+
     @abstractmethod
     def load_dataset(self) -> tuple:
         raise NotImplementedError
