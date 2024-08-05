@@ -13,6 +13,7 @@ def plot_datasets(
     n_cols=None,
     figsize=2.0,
     dpi=200,
+    cmap=None,
 ):
     """Plots all datasets in data with corresponding param_value as title.
     `fig_x` columns and `fig_y` rows.
@@ -46,7 +47,7 @@ def plot_datasets(
         ax.set_yticks([])
         ax.set_title(f"{param_values[param_value]}")
         X, l = data[param_value][0]
-        ax.scatter(X[:, 0], X[:, 1], s=1, c=l)
+        ax.scatter(X[:, 0], X[:, 1], s=1, c=l, cmap=cmap)
 
     return fig
 

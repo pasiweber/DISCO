@@ -93,8 +93,8 @@ if sys.argv[1] == "density_standardized":
         "runs": 1,
     }
     paths = {
-        "path": f"{RESULTS_PATH}density_standardized",
-        "new_path": f"{RESULTS_PATH2}density_standardized",
+        "path": f"{RESULTS_PATH}density_standardized/",
+        "new_path": f"{RESULTS_PATH2}density_standardized/",
     }
 
 else:
@@ -113,8 +113,9 @@ def restructer_clustering_results(path, new_path):
         new_file_path = f"{new_path}{dataset}/{clusterer}_{run}.csv"
         os.makedirs(os.path.dirname(new_file_path), exist_ok=True)
         df = pd.read_csv(file_path)
+        df["function"] = df["dataset"].apply(lambda args: literal_eval(args)[1])
         df["dataset"] = df["dataset"].apply(lambda args: literal_eval(args)[0])
-        df.to_csv(new_path, index=False, na_rep="nan")
+        df.to_csv(new_file_path, index=False, na_rep="nan")
 
 
 if __name__ == "__main__":

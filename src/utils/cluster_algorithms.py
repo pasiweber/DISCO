@@ -14,17 +14,19 @@ import numpy as np
 
 
 def optimal_k_dbscan(X, l):
-    dctree = DCTree(X, min_points=5, min_points_mr=5)
+    dctree = DCTree(X, min_points=5, min_points_mr=3)
 
     l_ = np.full(len(l), -1)
+    best_ari = 0
 
-    for k in range(1, len(set(l)) + 2):
+    for k in range(2, 4 * len(set(l))):
         eps = dctree.get_eps_for_k(k)
         l_dbscan = DBSCAN(eps).fit(X).labels_
         l_kcenter = dctree.get_k_center(k)
-        if ARI(l_dbscan, l_kcenter) > 0.5 and ARI(l_dbscan, l_kcenter) < 0.97:
-            break
-        l_ = l_dbscan
+        ari = ARI(l_dbscan, l_kcenter)
+        if best_ari - 0.01 <= ari:
+            l_ = l_dbscan
+            best_ari = ari
     return l_
 
 
