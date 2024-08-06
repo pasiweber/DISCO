@@ -1,3 +1,9 @@
+# Implementation of CVDD from ...
+# Source:
+# License:
+# Paper:
+
+
 import numpy as np
 from scipy.spatial.distance import pdist, squareform
 
@@ -25,7 +31,7 @@ def fast_PathbasedDist(d):
 
 
 def cvdd_score(X, piX, k=7):
-    d = squareform(pdist(X, metric='minkowski', p=2))  # Euclidean distance of X
+    d = squareform(pdist(X, metric="minkowski", p=2))  # Euclidean distance of X
     try:
         DD = Density_involved_distance(d, k)  # Density-involved distance of X
         cvddindex = CVDD(piX, d, DD)

@@ -1,3 +1,7 @@
+# Our own implementation of CVDD
+# Paper: 
+
+
 import networkx as nx
 import numpy as np
 from scipy.sparse.csgraph import minimum_spanning_tree, floyd_warshall
@@ -130,12 +134,11 @@ def CVDD(sep, com):
 def cvdd_score(data, labels, num_of_neighbors=7):
     unique_labels = np.unique(labels)
     num_cluster = len(unique_labels)
-    d = squareform(pdist(data, metric='minkowski', p=2))
+    d = squareform(pdist(data, metric="minkowski", p=2))
     try:
         DD = density_involved_dist(d, num_of_neighbors)
     except ZeroDivisionError:
         return 0
-
 
     sep = np.zeros(num_cluster)
     com = np.zeros(num_cluster)
@@ -159,7 +162,7 @@ def cvdd_score(data, labels, num_of_neighbors=7):
 
             d_2 = abs(pD_i - mean_i) ** 2
             var = d_2.sum() / (n - 1)
-            std_i = var ** 0.5
+            std_i = var**0.5
 
             com[i] = (1 / n) * std_i * mean_i
             # print('Sep and com from i {}'.format(i))
