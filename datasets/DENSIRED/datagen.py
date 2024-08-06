@@ -1,3 +1,13 @@
+# Implementation of DENSIRED datagenerator by
+# - Author: Philipp Jahn - Github user `PhilJahn`
+# - Source: https://github.com/PhilJahn/DENSIRED/blob/main/datagen.py
+# - License: MIT License (https://github.com/PhilJahn/DENSIRED/blob/main/LICENSE)
+
+# Paper: ??
+# Link: ??
+# Authors: Philipp Jahn, Christian M.M. Frey, Anna Beer, Collin Leiber, and Thomas Seidl
+
+
 import numpy as np
 import pandas as pd
 from random import random
@@ -31,7 +41,6 @@ def random_ball_num(center, radius, d, n, clunum):
     x[:, :-1] = center + x[:, :-1] * radius
     x[:, -1] = clunum
     return x
-
 
 
 class densityDataGen:
