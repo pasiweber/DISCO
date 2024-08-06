@@ -2,6 +2,14 @@ import numpy as np
 from sklearn.metrics import euclidean_distances
 from sklearn.neighbors import kneighbors_graph
 
+# Implementation of CVNN by
+# - Author: Jana Gauss - Github user `JanaGauss`
+# - Source: https://github.com/JanaGauss/dcsi/blob/main/code/functions/separability_functions.R
+# - License: -
+# Paper: https://ieeexplore.ieee.org/document/6341117
+# Paper-Authors: Liu, Yanchi, et al.
+# Our modifications:
+#    (1) translated from R to python
 
 def cvnn_score(data, labels, k=10):
     """

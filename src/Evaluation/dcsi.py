@@ -3,6 +3,14 @@ from scipy.spatial.distance import pdist, squareform
 from scipy.spatial.distance import cdist
 from scipy.sparse.csgraph import minimum_spanning_tree
 
+# Implementation of DCSI by
+# - Author: Jana Gauss - Github user `JanaGauss`
+# - Source: https://github.com/JanaGauss/dcsi/
+# - License: -
+# Paper: https://arxiv.org/abs/2310.12806
+# Paper-Authors: Gauss, Jana, Fabian Scheipl, and Moritz Herrmann.
+# Our modifications:
+#    (1) translated from R to python
 
 def dcsi_score(data, partition, min_pts=5):
     clusters = partition

@@ -8,11 +8,17 @@ from sklearn.metrics import silhouette_samples
 
 from src.Evaluation.dcdistances.dctree import DCTree
 
+# Implementation of DISCO by
+# - Author: us
+# - Source: this git
+# - License: -
+# Paper: submitted with this code
+# Paper-Authors: anonymous authors
 
 def disco_score(X: np.ndarray, labels: np.ndarray, min_points: int = 5):
-    """Compute the mean Silhouette Coefficient of all samples.
+    """Compute the Disco score of all samples.
 
-    The Silhouette Coefficient is calculated using the mean intra-cluster
+    The Disco score is calculated using the mean intra-cluster
     distance (``a``) and the mean nearest-cluster distance (``b``) for each
     sample.  The Silhouette Coefficient for a sample is ``(b - a) / max(a,
     b)``.  To clarify, ``b`` is the distance between a sample and the nearest

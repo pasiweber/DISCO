@@ -1,7 +1,7 @@
 from .cdbw import cdbw_score
 from .cvdd_new import cvdd_score
 from .cvnn import cvnn_score
-from .dbcv_new import validity_index as dbcv_score
+from .dbcv import validity_index as dbcv_score
 from .dc_dunn import dc_dunn_score
 from .dcsi import dcsi_score
 from .disco import disco_score, disco_samples, p_noise

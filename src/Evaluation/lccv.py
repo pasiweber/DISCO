@@ -3,12 +3,13 @@ from scipy.sparse.csgraph import floyd_warshall
 from scipy.spatial.distance import cdist
 import numpy as np
 
+# Own own implementation of LCCV
+# - Author: us
+# - Source: this git
+# - License: -
+# Paper: https://ieeexplore.ieee.org/stamp/stamp.jsp?tp=&arnumber=8424512
+# Paper-Authors: Cheng, Dongdong, et al.
 
-###################################################################################################
-#                                                                                                 #
-#   Code implemented based on  https://ieeexplore.ieee.org/stamp/stamp.jsp?tp=&arnumber=8424512   #
-#                                                                                                 #
-###################################################################################################
 def nan_searching(X, dist):
     # NaN seraching Algorithm 1
     # number of datapoints

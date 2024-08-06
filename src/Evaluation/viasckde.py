@@ -4,11 +4,12 @@ from sklearn.neighbors import KernelDensity
 import seaborn as sns
 import numpy as np
 
-#############################################################################
-#                                                                           #
-#   Code from https://github.com/senolali/VIASCKDE/blob/main/VIASCKDE.py    #
-#                                                                           #
-#############################################################################
+# Implementation of VIASCKDE by
+# - Author: Ali Şenol - Github user `senoali`
+# - Source: https://github.com/senolali/VIASCKDE/blob/main/VIASCKDE.py
+# - License: GPL-3.0 licence
+# Paper: https://doi.org/10.1155/2022/4059302
+# Paper-Authors: Şenol, Ali.
 
 def closest_node(n, v):
     kdtree = KDTree(v)

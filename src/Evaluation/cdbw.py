@@ -13,9 +13,9 @@ from scipy.spatial.distance import cdist
 # - Author: Alexander Lashkov - Github user `alashkov83`
 # - Source: https://github.com/alashkov83/CDbw
 # - License: MIT License
-# - Paper: https://doi.org/10.1016/j.patrec.2007.12.011
-# - Paper-Authors: Halkidi, Maria, and Michalis Vazirgiannis.
-# - Our modifications:
+# Paper: https://doi.org/10.1016/j.patrec.2007.12.011
+# Paper-Authors: Halkidi, Maria, and Michalis Vazirgiannis.
+# Our modifications:
 #    (1) add option QJ to avoid missing dimensions
 #    (2) introduction of dict to avoid double computation of convex hull (line 210)
 #    (3) 591-600 to move labeling from to zero, e.g., 1,3,5 -> 0,1,2

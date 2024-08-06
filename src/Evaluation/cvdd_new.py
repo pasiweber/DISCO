@@ -1,9 +1,9 @@
 # Own own implementation of CVDD
-# - Author: <anonymous>
-# - Source: <anonymous>
+# - Author: us
+# - Source: this git
 # - License: -
-# Paper: TODO: CVDD paper link
-# Paper-Authors: TODO: CVDD paper authors
+# Paper: https://ieeexplore.ieee.org/abstract/document/8672850/
+# Paper-Authors: Hu, Lianyu, and Caiming Zhong
 
 
 import networkx as nx
