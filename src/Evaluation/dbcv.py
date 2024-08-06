@@ -8,7 +8,7 @@
 # Link: https://epubs.siam.org/doi/abs/10.1137/1.9781611973440.96
 
 # Our modifications:
-#    (1) 379-386 add functionalities to handle for labelings not starting with zero
+#    (1) 386-392 add functionalities to handle for labelings not starting with zero
 
 
 import numpy as np

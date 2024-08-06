@@ -8,7 +8,7 @@
 # Authors: Maria Halkidi and Michalis Vazirgiannis
 
 # Our modifications:
-#    (1) 504- 511 to move labeling from to zero, e.g., 1,3,5 -> 0,1,2
+#    (1) 503- 512 to move labeling from to zero, e.g., 1,3,5 -> 0,1,2
 
 
 """Created by lashkov on 31.10.18"""
