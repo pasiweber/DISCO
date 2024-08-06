@@ -17,6 +17,15 @@ from src.Evaluation.dcdistances.dctree import DCTree
 def disco_score(X: np.ndarray, labels: np.ndarray, min_points: int = 5):
     """Compute the mean DISCO score of all samples.
 
+    The DISCO score is a measure of how well samples are clustered
+    with samples that are similar to themselves. Clustering models with a high
+    DISCO score are said to be dense, where samples in the same
+    cluster are similar to each other, and well separated, where samples in
+    different clusters are not very similar to each other.
+    Additionally, the DISCO score measures noise in relation to the given
+    clustering. If noise lays within a sparse region and is far away from
+    cluster regions it scores a high value, otherwise it will get a low value.
+
     The DISCO score is calculated using the mean intra-cluster on the
     dc-distance (``a``) and the mean nearest-cluster on the dc-distance (``b``)
     for each non noise sample.  The DISCO score for a non noise sample is 
@@ -42,16 +51,15 @@ def disco_score(X: np.ndarray, labels: np.ndarray, min_points: int = 5):
 
     Parameters
     ----------
-    X : {array-like, sparse matrix} of shape (n_samples_a, n_samples_a) if metric == \
-            "precomputed" or (n_samples_a, n_features) otherwise
-        An array of pairwise distances between samples, or a feature array.
+    X : {array-like, sparse matrix} of (n_samples_a, n_features)
+        A feature array.
 
     labels : array-like of shape (n_samples,)
         Predicted labels for each sample.
 
     Returns
     -------
-    disco : float
+    disco_score : float
         Mean DISCO score for all samples.
 
     References
@@ -62,12 +70,13 @@ def disco_score(X: np.ndarray, labels: np.ndarray, min_points: int = 5):
 
     Examples
     --------
+    >>> from disco import disco_score
     >>> from sklearn.datasets import make_moons
     >>> from sklearn.cluster import HDBSCAN
-    >>> from disco import disco_score
     >>> X, y = make_moons(random_state=42)
     >>> hdbscan = HDBSCAN()
-    >>> disco_score(X, hdbscan.fit_predict(X))
+    >>> labels = hdbscan.fit_predict(X).labels_
+    >>> disco_score(X, labels)
     0.71...
     """
 
@@ -82,69 +91,60 @@ def disco_samples(X: np.ndarray, labels: np.ndarray, min_points: int = 5) -> np.
     DISCO score are said to be dense, where samples in the same
     cluster are similar to each other, and well separated, where samples in
     different clusters are not very similar to each other.
+    Additionally, the DISCO score measures noise in relation to the given
+    clustering. If noise lays within a sparse region and is far away from
+    cluster regions it scores a high value, otherwise it will get a low value.
 
-    The DISCO score is calculated using the mean intra-cluster
-    distance (``a``) and the mean nearest-cluster distance (``b``) for each
-    sample.  The DISCO score for a sample is ``(b - a) / max(a,
-    b)``.
-    Note that DISCO score is only defined if number of labels
-    is 2 ``<= n_labels <= n_samples - 1``.
+    The DISCO score is calculated using the mean intra-cluster on the
+    dc-distance (``a``) and the mean nearest-cluster on the dc-distance (``b``)
+    for each non noise sample.  The DISCO score for a non noise sample is
+    ``(b - a) / max(a, b)``.
+    To clarify, ``b`` is the dc-distance between a non noise sample and the nearest
+    cluster that the sample is not a part of.
+    ``-1`` in labels are considered as noise and their DISCO score is calculated
+    by the minimum of the two different measures ``p_sparse`` and ``p_far``.
+    ``p_sparse`` measures how well the noise sample is within a sparse region.
+    ``p_far`` measure how well the noise is remote to non noise samples.
+    Note that DISCO score is defined for all possible number of labels
+    ``1 <= n_labels <= n_samples``.
+    Except for ``-1`` every other value is considered as cluster label.
 
     This function returns the DISCO score for each sample.
 
     The best value is 1 and the worst value is -1. Values near 0 indicate
-    overlapping clusters.
+    overlapping clusters. Negative values generally indicate that a sample has
+    been assigned to the wrong cluster, as a different cluster is more similar.
 
-    Read more in the :ref:`User Guide <silhouette_coefficient>`.
+    Read more in the :ref:`User Guide <disco_score>`.
 
     Parameters
     ----------
-    X : {array-like, sparse matrix} of shape (n_samples_a, n_samples_a) if metric == \
-            "precomputed" or (n_samples_a, n_features) otherwise
-        An array of pairwise distances between samples, or a feature array. If
-        a sparse matrix is provided, CSR format should be favoured avoiding
-        an additional copy.
+    X : {array-like, sparse matrix} of (n_samples_a, n_features)
+        A feature array.
 
     labels : array-like of shape (n_samples,)
         Label values for each sample.
 
-    metric : str or callable, default='euclidean'
-        The metric to use when calculating distance between instances in a
-        feature array. If metric is a string, it must be one of the options
-        allowed by :func:`~sklearn.metrics.pairwise_distances`.
-        If ``X`` is the distance array itself, use "precomputed" as the metric.
-        Precomputed distance matrices must have 0 along the diagonal.
-
-    **kwds : optional keyword parameters
-        Any further parameters are passed directly to the distance function.
-        If using a ``scipy.spatial.distance`` metric, the parameters are still
-        metric dependent. See the scipy docs for usage examples.
-
     Returns
     -------
-    silhouette : array-like of shape (n_samples,)
+    disco_score : array-like of shape (n_samples,)
         DISCO scores for each sample.
 
     References
     ----------
 
-    .. [1] `Peter J. Rousseeuw (1987). "Silhouettes: a Graphical Aid to the
-       Interpretation and Validation of Cluster Analysis". Computational
-       and Applied Mathematics 20: 53-65.
-       <https://www.sciencedirect.com/science/article/pii/0377042787901257>`_
+    .. [1] `anonymous`_
 
-    .. [2] `Wikipedia entry on the DISCO score
-       <https://en.wikipedia.org/wiki/Silhouette_(clustering)>`_
 
     Examples
     --------
-    >>> from sklearn.metrics import silhouette_samples
-    >>> from sklearn.datasets import make_blobs
-    >>> from sklearn.cluster import KMeans
-    >>> X, y = make_blobs(n_samples=50, random_state=42)
-    >>> kmeans = KMeans(n_clusters=3, random_state=42)
-    >>> labels = kmeans.fit_predict(X)
-    >>> silhouette_samples(X, labels)
+    >>> from disco import disco_score
+    >>> from sklearn.datasets import make_moons
+    >>> from sklearn.cluster import HDBSCAN
+    >>> X, y = make_moons(random_state=42)
+    >>> hdbscan = HDBSCAN()
+    >>> labels = hdbscan.fit_predict(X).labels_
+    >>> disco_samples(X, labels)
     array([...])
     """
 
@@ -189,6 +189,48 @@ def p_cluster(
     min_points: int = 5,
     precomputed_dc_dists=False,
 ) -> np.ndarray:
+    """Compute p_cluster of all samples.
+
+    p_cluster is the Silhouette Coefficient over the dc-distance metric.
+    Contrary to the Silhouette Coefficient, it is definded for
+    ``1 <= n_labels <= n_samples``.
+
+    For ``n_labels == 1`` or `` ``n_labels == n_samples`` it will return
+    ``np.zeros(n_labels)``.
+
+    In this function, ``-1`` is NOT handled as noise, but as a valid cluster label!
+
+    The best value is 1 and the worst value is -1. Values near 0 indicate
+    overlapping clusters. Negative values generally indicate that a sample has
+    been assigned to the wrong cluster, as a different cluster is more similar.
+
+    Read more in the :ref:`User Guide <silhouette_coefficient>`.
+
+    Parameters
+    ----------
+    X : {array-like, sparse matrix} of (n_samples_a, n_features)
+        A feature array.
+
+    labels : array-like of shape (n_samples,)
+        Predicted labels for each sample.
+
+    Returns
+    -------
+    p_cluster : array-like of shape (n_samples,)
+        p_cluster scores for each sample.
+
+    Examples
+    --------
+    >>> from disco import p_cluster
+    >>> from sklearn.datasets import make_moons
+    >>> from sklearn.cluster import HDBSCAN
+    >>> X, y = make_moons(random_state=42)
+    >>> hdbscan = HDBSCAN()
+    >>> labels = hdbscan.fit_predict(X).labels_
+    >>> p_cluster(X, labels)
+    array([...])
+    """
+
     if len(X) != len(labels):
         raise ValueError("Dataset size of `X` differs from label size of `lables`.")
 
@@ -198,7 +240,7 @@ def p_cluster(
     if len(X) == 1:
         return np.array([0])
 
-    if len(X) == len(set(labels)):
+    if 1 == len(set(labels)) or len(set(labels)) == len(X):
         return np.zeros(len(X))
 
     if precomputed_dc_dists:
@@ -217,11 +259,40 @@ def p_noise(
     min_points: int = 5,
     dc_dists: np.ndarray | None = None,
 ) -> tuple[np.ndarray, np.ndarray]:
-    """
+    """Compute (p_sparse, p_far) of all samples.
+
+    (p_sparse, p_far) is //TODO
+
+    In this function, ``-1`` is handled as noise and it will only return a tuple of
+    two arrays both of size ``n_noise``.
+
+    The best value is 1 and the worst value is -1. Values near 0 indicate
+    //TODO. Negative values generally indicate that a noise sample has
+    been assigned as noise, although it should rather belong to a cluster.
+
+    Parameters
+    ----------
+    X : {array-like, sparse matrix} of (n_samples_a, n_features)
+        A feature array.
+
+    labels : array-like of shape (n_samples,)
+        Predicted labels for each sample.
+
     Returns
     -------
-    tuple[np.ndarray, np.ndarray]
-        (p_sparse, p_far)
+    (p_sparse, p_far) : tuple of two array-like, both of shape (n_noise,)
+        (p_sparse, p_far) for each sample returned in two seperate arrays.
+
+    Examples
+    --------
+    >>> from disco import p_noise
+    >>> from sklearn.datasets import make_moons
+    >>> from sklearn.cluster import HDBSCAN
+    >>> X, y = make_moons(random_state=42)
+    >>> hdbscan = HDBSCAN()
+    >>> labels = hdbscan.fit_predict(X).labels_
+    >>> p_noise(X, labels)
+    (array([...]), array([...]))
     """
 
     if len(X) == 0:
