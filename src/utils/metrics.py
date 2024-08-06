@@ -10,7 +10,7 @@ from Evaluation.disco import disco_score as DISCO, p_noise as p_noise
 from Evaluation.dc_dunn import dc_dunn_score as DC_DUNN
 
 # Competitors
-from Evaluation.dbcv_new import validity_index as DBCV
+from Evaluation.dbcv import validity_index as DBCV
 from Evaluation.dcsi import dcsi_score as DCSI
 from Evaluation.sdbw import sdbw_score as S_DBW
 from Evaluation.cdbw import cdbw_score as CDBW
