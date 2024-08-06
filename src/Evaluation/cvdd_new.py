@@ -1,5 +1,9 @@
-# Our own implementation of CVDD
-# Paper: 
+# Own own implementation of CVDD
+# - Author: <anonymous>
+# - Source: <anonymous>
+# - License: -
+# Paper: TODO: CVDD paper link
+# Paper-Authors: TODO: CVDD paper authors
 
 
 import networkx as nx

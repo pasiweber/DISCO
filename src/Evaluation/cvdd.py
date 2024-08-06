@@ -1,7 +1,9 @@
-# Implementation of CVDD from ...
-# Source:
-# License:
-# Paper:
+# Implementation of CVDD by
+# - Author: TODO
+# - Source: TODO
+# - License: -
+# Paper: TODO
+# Paper-Authors: TODO
 
 
 import numpy as np
