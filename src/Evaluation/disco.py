@@ -1,3 +1,13 @@
+# Implementation of DISCO by
+# - Author: us
+# - Source: this git
+# - License: -
+
+# Paper: submitted with this code
+# Authors: anonymous authors
+# Link: comming soon
+
+
 import numpy as np
 from sklearn.neighbors import KDTree
 from sklearn.metrics import silhouette_samples

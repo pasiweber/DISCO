@@ -1,9 +1,11 @@
 # Implementation of DPC (DensityPeakClustering) by
 # - Author: Colin - Github user `colinwke`
-# - Source: https://github.com/colinwke/dpca
+# - Source: https://github.com/colinwke/dpca/blob/master/dpca/cluster.py
 # - License: -
-# Paper: https://www.science.org/doi/10.1126/science.1242072
-# Paper-Authors: Alex Rodriguez and Alessandro Laio
+
+# Paper: Clustering by fast search and find of density peaks
+# Authors: Alex Rodriguez and Alessandro Laio
+# Link: https://www.science.org/doi/10.1126/science.1242072
 
 
 import math

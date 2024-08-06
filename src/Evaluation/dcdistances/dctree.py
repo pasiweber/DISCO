@@ -1,6 +1,12 @@
-# Authors: Pascal Weber <pascal.weber@univie.ac.at>
-#
-# License: BSD 3 clause
+# Implementation of the dc-distance with a DCTree by
+# - Author: us
+# - Source: this repo
+# - License: -
+
+# Paper: Connecting the Dots -- Density-Connectivity Distance unifies DBSCAN, k-Center and Spectral Clustering
+# Authors: Anna Beer, Andrew Draganov, Ellen Hohma, Philipp Jahn, Christian M.M. Frey, and Ira Assent
+# Link: https://doi.org/10.1145/3580305.3599283
+
 
 from __future__ import annotations
 

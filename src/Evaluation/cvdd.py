@@ -1,9 +1,14 @@
 # Implementation of CVDD by
-# - Author: TODO
-# - Source: TODO
-# - License: -
-# Paper: TODO
-# Paper-Authors: TODO
+# - Author: Lianyu Hu - Github user `hulianyu`
+# - Source: https://github.com/hulianyu/CVDD/blob/master/CVDD.m
+# - License: MIT license (https://github.com/hulianyu/CVDD/blob/master/LICENSE)
+
+# Paper: An Internal Validity Index Based on Density-Involved Distance
+# Authors: Lianyu Hu and Caiming Zhong
+# Link: https://ieeexplore.ieee.org/document/8672850
+
+# Our modifications:
+#    (1) translated from Matlab
 
 
 import numpy as np

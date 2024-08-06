@@ -1,3 +1,16 @@
+# Implementation of DCSI by
+# - Author: Jana Gauss - Github user `JanaGauss`
+# - Source: https://github.com/JanaGauss/dcsi/
+# - License: -
+
+# Paper: DCSI -- An improved measure of cluster separability based on separation and connectedness
+# Authors: Jana Gauss, Fabian Scheipl, and Moritz Herrmann
+# Link: https://arxiv.org/abs/2310.12806
+
+# Our modifications:
+#    (1) translated from R to python
+
+
 import numpy as np
 from scipy.spatial.distance import pdist, squareform
 from scipy.spatial.distance import cdist

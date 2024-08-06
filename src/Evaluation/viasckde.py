@@ -1,14 +1,17 @@
-import matplotlib.pyplot as plt
+# Implementation of VIASCKDE by
+# - Author: Ali Şenol - Github user `senoali`
+# - Source: https://github.com/senolali/VIASCKDE/blob/main/VIASCKDE.py
+# - License: GPL-3.0 licence (https://github.com/senolali/VIASCKDE/blob/main/LICENSE)
+
+# Paper: VIASCKDE Index: A Novel Internal Cluster Validity Index for Arbitrary-Shaped Clusters Based on the Kernel Density Estimation
+# Link: https://doi.org/10.1155/2022/4059302
+# Authors: Ali Şenol
+
+
 from scipy.spatial import KDTree
 from sklearn.neighbors import KernelDensity
-import seaborn as sns
 import numpy as np
 
-#############################################################################
-#                                                                           #
-#   Code from https://github.com/senolali/VIASCKDE/blob/main/VIASCKDE.py    #
-#                                                                           #
-#############################################################################
 
 def closest_node(n, v):
     kdtree = KDTree(v)

@@ -1,8 +1,18 @@
+# Implementation of DSI by
+# - Author: Shuyue Guan - Github user `ShuyueG`
+# - Source: https://github.com/ShuyueG/CVI_using_DSI/blob/main/cluster_DSI_example.py
+# - License: GPL-3.0 licence (https://github.com/ShuyueG/CVI_using_DSI/blob/main/LICENSE)
+
+# Paper: An Internal Cluster Validity Index Using a Distance-based Separability Measure
+# Authors: Shuyue Guan and Murray Loew
+# Link: https://ieeexplore.ieee.org/document/9288314
+
+
 import numpy as np
 import scipy.spatial.distance as distance
 from scipy.stats import ks_2samp
 
-# Official implementation from https://github.com/ShuyueG/CVI_using_DSI/blob/main/cluster_DSI_example.py
+
 def dists(data, dist_func=distance.euclidean):  # compute ICD
     num = data.shape[0]
     data = data.reshape((num, -1))

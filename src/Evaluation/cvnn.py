@@ -1,3 +1,16 @@
+# Implementation of CVNN by
+# - Author: Jana Gauss - Github user `JanaGauss`
+# - Source: https://github.com/JanaGauss/dcsi/blob/main/code/functions/separability_functions.R
+# - License: -
+
+# Paper: Understanding and Enhancement of Internal Clustering Validation Measures
+# Authors: Yanchi Liu, Zhongmou Li, Hui Xiong, Xuedong Gao, Junjie Wu, and Sen Wu
+# Link: https://ieeexplore.ieee.org/document/6341117
+
+# Our modifications:
+#    (1) translated from R to python
+
+
 import numpy as np
 from sklearn.metrics import euclidean_distances
 from sklearn.neighbors import kneighbors_graph

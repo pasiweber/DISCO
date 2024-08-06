@@ -1,9 +1,18 @@
-# -*- coding: utf-8 -*-
-# https://github.com/alashkov83/S_Dbw/blob/master/s_dbw/s_dbw.py
+# Implementation of S_Dbw by
+# - Author: Alexander Lashkov - Github user `alashkov83`
+# - Source: https://github.com/alashkov83/S_Dbw/blob/master/s_dbw/s_dbw.py
+# - License: MIT License (https://github.com/alashkov83/S_Dbw/blob/master/LICENSE)
+
+# Paper: A density-based cluster validity approach using multi-representatives
+# Link: https://doi.org/10.1016/j.patrec.2007.12.011
+# Authors: Maria Halkidi and Michalis Vazirgiannis
+
+# Our modifications:
+#    (1) 504- 511 to move labeling from to zero, e.g., 1,3,5 -> 0,1,2
+
+
 """Created by lashkov on 31.10.18"""
-
 import math
-
 import numpy as np
 from scipy.spatial.distance import cdist
 

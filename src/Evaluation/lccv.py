@@ -1,14 +1,19 @@
+# Implementation of LCCV by
+# - Author: us
+# - Source: this git
+# - License: -
+
+# Paper: A Novel Cluster Validity Index Based on Local Cores
+# Link: https://ieeexplore.ieee.org/stamp/stamp.jsp?tp=&arnumber=8424512
+# Authors: Dongdong Cheng, Qingsheng Zhu, Jinlong Huang, Quanwang Wu, and Lijun Yang
+
+
 from scipy.sparse import csr_matrix
 from scipy.sparse.csgraph import floyd_warshall
 from scipy.spatial.distance import cdist
 import numpy as np
 
 
-###################################################################################################
-#                                                                                                 #
-#   Code implemented based on  https://ieeexplore.ieee.org/stamp/stamp.jsp?tp=&arnumber=8424512   #
-#                                                                                                 #
-###################################################################################################
 def nan_searching(X, dist):
     # NaN seraching Algorithm 1
     # number of datapoints

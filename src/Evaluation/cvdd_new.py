@@ -1,9 +1,11 @@
-# Own own implementation of CVDD
-# - Author: <anonymous>
-# - Source: <anonymous>
+# Implementation of CVDD by
+# - Author: us
+# - Source: this git
 # - License: -
-# Paper: TODO: CVDD paper link
-# Paper-Authors: TODO: CVDD paper authors
+
+# Paper: An Internal Validity Index Based on Density-Involved Distance
+# Authors: Lianyu Hu and Caiming Zhong
+# Link: https://ieeexplore.ieee.org/document/8672850
 
 
 import networkx as nx
