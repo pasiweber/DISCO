@@ -261,14 +261,23 @@ def p_noise(
 ) -> tuple[np.ndarray, np.ndarray]:
     """Compute (p_sparse, p_far) of all samples.
 
-    (p_sparse, p_far) is //TODO
+    ``p_sparse`` calculates how well the noise sample lays within a sparse region.
+    ``p_far`` calulcates how well the noise is remote remote to a non noise sample.
+    To clarify, ``p_sparse`` and ``p_far`` are calculated depending on the existing
+    clustering. Changing the clustering without changing the noise samples can change
+    the values of ``p_sparse`` and ``p_far``.
 
-    In this function, ``-1`` is handled as noise and it will only return a tuple of
-    two arrays both of size ``n_noise``.
+    In this function, ``-1`` is handled as noise. The return value consists of a
+    tuple with two arrays both of size ``n_noise``.
 
-    The best value is 1 and the worst value is -1. Values near 0 indicate
-    //TODO. Negative values generally indicate that a noise sample has
-    been assigned as noise, although it should rather belong to a cluster.
+    The best value is 1 and the worst value is -1 for both ``p_sparse`` and ``p_far``.
+    For ``p_sparse``, values near 0 indicate that the noise sample is within an area which
+    is as sparse as the sparsest existing cluster. Note that this value is calculated
+    depending on the sparsest cluster.  Negative values indicate that the noise sample has
+    been labeled as noise, although it lays within a very dense region.
+    For ``p_far``, values near 0 indicate that the noise sample lays at the border of
+    an existing cluster. Negative values generally indicate that a noise sample lays within
+    an existing cluster.
 
     Parameters
     ----------
@@ -281,7 +290,7 @@ def p_noise(
     Returns
     -------
     (p_sparse, p_far) : tuple of two array-like, both of shape (n_noise,)
-        (p_sparse, p_far) for each sample returned in two seperate arrays.
+        (p_sparse, p_far) for each sample, returned in two seperate arrays.
 
     Examples
     --------
@@ -312,7 +321,6 @@ def p_noise(
     if dc_dists is None:
         dc_dists = DCTree(X, min_points=min_points, no_fastindex=False).dc_distances()
 
-    # Noise evaluation per noise sample
     tree = KDTree(X)
     core_dists, _ = tree.query(X, k=min_points)
     core_dists = core_dists.max(axis=1)
@@ -323,7 +331,7 @@ def p_noise(
     for i, id in enumerate(cluster_ids):
         max_core_dist[i] = core_dists[labels == id].max()
 
-    # Core property of noise evaluation
+    # p_sparse calculation
     p_sparse = np.full(len(labels[labels == -1]), np.inf)
     for i in range(len(cluster_ids)):
         numerator = core_dists[labels == -1] - max_core_dist[i]
@@ -336,7 +344,7 @@ def p_noise(
         )
         p_sparse = np.minimum(p_sparse, p_sparse_i)
 
-    # Distance property of noise evaluation
+    # p_far calculation
     p_far = np.full(len(labels[labels == -1]), np.inf)
     for i, id in enumerate(cluster_ids):
         min_dist_to_cluster_i = np.min(dc_dists[np.ix_(labels == -1, labels == id)], axis=1)
@@ -350,5 +358,4 @@ def p_noise(
         )
         p_far = np.minimum(p_far, p_far_i)
 
-    # Noise evaluation is minimum of core and distance property
     return p_sparse, p_far
