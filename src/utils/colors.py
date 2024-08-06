@@ -2,7 +2,7 @@
 
 # matplotlib takes rgb-strings everywhere (and also other stuff like the xkcd-colors or the basic color names)
 
-rwth_colors = {
+colors = {
     'blue'       : '#00549F', # blue
     'blue_75'    : '#407FB7',
     'blue_50'    : '#8EBAE5',

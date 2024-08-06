@@ -1,4 +1,3 @@
-import pandas as pd
 import os
 import sys
 
@@ -6,11 +5,11 @@ parent_folder = os.path.dirname(os.path.abspath("./"))
 sys.path.append(parent_folder)
 
 
-from Clusterer.DPC import DensityPeakCluster
-from sklearn.cluster import KMeans, DBSCAN, HDBSCAN, SpectralClustering, MeanShift, AgglomerativeClustering
-from src.Evaluation.dcdistances.dctree import DCTree
-from sklearn.metrics import adjusted_rand_score as ARI, normalized_mutual_info_score as NMI
 import numpy as np
+from sklearn.cluster import KMeans, DBSCAN, HDBSCAN, SpectralClustering, MeanShift, AgglomerativeClustering
+from sklearn.metrics import adjusted_rand_score as ARI, normalized_mutual_info_score as NMI
+from src.Clusterer.DPC import DensityPeakCluster
+from src.Evaluation.dcdistances.dctree import DCTree
 
 
 def optimal_k_dbscan(X, l):
