@@ -6,23 +6,23 @@ parent_folder = os.path.dirname(os.path.abspath("./"))
 sys.path.append(parent_folder)
 
 
-from src.Evaluation.DISCO.disco import disco_score as DISCO, only_noise_samples as only_noise_samples
-from src.Evaluation.DC_DUNN.dc_dunn import dc_dunn_score as DC_DUNN
+from Evaluation.disco import disco_score as DISCO, p_noise as p_noise
+from Evaluation.dc_dunn import dc_dunn_score as DC_DUNN
 
 # Competitors
-from src.Evaluation.DBCV.dbcv_new import validity_index as DBCV
-from src.Evaluation.DCSI.dcsi import dcsi_score as DCSI
-from src.Evaluation.S_Dbw.sdbw import sdbw_score as S_DBW
-from src.Evaluation.CDBW.cdbw import cdbw_score as CDBW
-from src.Evaluation.CVDD.cvdd_new import cvdd_score as CVDD
-from src.Evaluation.CVNN.cvnn import cvnn_score as CVNN
-from src.Evaluation.DSI.dsi import dsi_score as DSI
-from src.Evaluation.LCCV.lccv import lccv_score as LCCV
-from src.Evaluation.VIASCKDE.viasckde import viasckde_score as VIASCKDE
+from Evaluation.dbcv_new import validity_index as DBCV
+from Evaluation.dcsi import dcsi_score as DCSI
+from Evaluation.sdbw import sdbw_score as S_DBW
+from Evaluation.cdbw import cdbw_score as CDBW
+from Evaluation.cvdd_new import cvdd_score as CVDD
+from Evaluation.cvnn import cvnn_score as CVNN
+from Evaluation.dsi import dsi_score as DSI
+from Evaluation.lccv import lccv_score as LCCV
+from Evaluation.viasckde import viasckde_score as VIASCKDE
 
 # Gauss
 from sklearn.metrics import silhouette_score as SILHOUETTE
-from src.Evaluation.DUNN.dunn import dunn_score as DUNN
+from Evaluation.dunn import dunn_score as DUNN
 from sklearn.metrics import davies_bouldin_score as DB
 from sklearn.metrics import calinski_harabasz_score as CH
 

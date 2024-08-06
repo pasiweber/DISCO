@@ -1,18 +1,21 @@
-from .CDBW.cdbw import cdbw_score
-from .CVDD.cvdd_new import cvdd_score
-from .CVNN.cvnn import cvnn_score
-from .DBCV.dbcv_new import validity_index as dbcv_score
-from .DC_DUNN.dc_dunn import dc_dunn_score
-from .DCSI.dcsi import dcsi_score
-from .DISCO.disco import disco_score, disco_samples, only_noise_samples as disco_noise_samples
-from .DSI.dsi import dsi_score
-from .DUNN.dunn import dunn_score
-from .LCCV.lccv import lccv_score
-from .S_Dbw.sdbw import sdbw_score
-from .Silhouette.silhouette import silhouette_score, silhouette_samples
-from .VIASCKDE.viasckde import viasckde_score
+from .cdbw import cdbw_score
+from .cvdd_new import cvdd_score
+from .cvnn import cvnn_score
+from .dbcv_new import validity_index as dbcv_score
+from .dc_dunn import dc_dunn_score
+from .dcsi import dcsi_score
+from .disco import disco_score, disco_samples, p_noise
+from .dsi import dsi_score
+from .dunn import dunn_score
+from .lccv import lccv_score
+from .sdbw import sdbw_score
+from .viasckde import viasckde_score
+
+from sklearn.metrics import silhouette_score, silhouette_samples
+
 
 __all__ = [
+    # In this repository
     "cdbw_score",
     "cvdd_score",
     "cvnn_score",
@@ -21,12 +24,13 @@ __all__ = [
     "dcsi_score",
     "disco_score",
     "disco_samples",
-    "disco_noise_samples",
+    "p_noise",
     "dsi_score",
     "dunn_score",
     "lccv_score",
     "sdbw_score",
+    "viasckde_score",
+    # From external libraries
     "silhouette_score",
     "silhouette_samples",
-    "viasckde_score",
 ]

@@ -1,5 +1,10 @@
-#!/usr/bin/env python
-# -*- coding: UTF-8 -*-
+# Implementation of DPC (DensityPeakClustering) by
+# - Author: Colin - Github user `colinwke`
+# - Source: https://github.com/colinwke/dpca
+# - License: -
+# Paper: https://www.science.org/doi/10.1126/science.1242072
+# Paper-Authors: Alex Rodriguez and Alessandro Laio
+
 
 import math
 import numpy as np

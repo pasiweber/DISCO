@@ -6,7 +6,7 @@ parent_folder = os.path.dirname(os.path.abspath("./"))
 sys.path.append(parent_folder)
 
 
-from src.Cluster.DPC.cluster import DensityPeakCluster
+from Clusterer.DPC import DensityPeakCluster
 from sklearn.cluster import KMeans, DBSCAN, HDBSCAN, SpectralClustering, MeanShift, AgglomerativeClustering
 from src.Evaluation.dcdistances.dctree import DCTree
 from sklearn.metrics import adjusted_rand_score as ARI, normalized_mutual_info_score as NMI
