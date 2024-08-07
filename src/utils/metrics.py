@@ -1,4 +1,5 @@
 import pandas as pd
+import numpy as np
 import os
 import sys
 
@@ -212,7 +213,7 @@ def rescale_measures(df, metrics):
     df = df.copy()
     values = df[df.measure.isin(metrics)].groupby(["measure"])["value"]
     df.loc[df.measure.isin(metrics), "value"] = values.transform(
-        lambda x: (x - x.min()) / (x.max() - x.min())
+        lambda x: (x - x.min()) / (x.max() - x.min()) if x.max() - x.min() > 3e-6 else np.maximum(x, np.full(len(x), 1))
     )
     return df
 
