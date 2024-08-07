@@ -4,6 +4,7 @@ import os
 import sys
 import pickle
 import psutil
+import traceback
 
 
 parent_folder = os.path.dirname(os.path.abspath("./"))
@@ -56,14 +57,18 @@ def exec_func(data, fn, args=[], kwargs={}):
     start_time = time.time()
     start_process_time = time.process_time()
     mem_before = process_memory()
-    value = fn(*data, *args, **kwargs)
+    try:
+        value = fn(*data, *args, **kwargs)
+    except Exception:
+        traceback.print_exc()
+        value = np.nan
     mem_after = process_memory()
     end_process_time = time.process_time()
     end_time = time.time()
     return value, end_time - start_time, end_process_time - start_process_time, mem_after - mem_before
 
 
-def calc_eval_measures(X, l, name=None, metrics=METRICS, runs=10, n_jobs=32, task_timeout=None):
+def calc_eval_measures(X, l, name=None, metrics=METRICS, runs=10, n_jobs=64, task_timeout=None):
     """Calculate all evaluation measures for a given dataset with data `X` and labels `l`."""
 
     pool = WorkerPool(n_jobs=n_jobs, use_dill=True)
@@ -107,7 +112,7 @@ def calc_eval_measures(X, l, name=None, metrics=METRICS, runs=10, n_jobs=32, tas
 
 
 def calc_eval_measures_for_multiple_datasets(
-    data, param_values, metrics=METRICS, n_jobs=32, task_timeout=None
+    data, param_values, metrics=METRICS, n_jobs=64, task_timeout=None
 ):
     """Calculates all evaluation measures for all datasets in data.
 
