@@ -8,7 +8,7 @@
 # Authors: Maria Halkidi and Michalis Vazirgiannis
 
 # Our modifications:
-#    (1) 503- 512 to move labeling from to zero, e.g., 1,3,5 -> 0,1,2
+#    (1) 503- 513 to move labeling from to zero, e.g., 1,3,5 -> 0,1,2
 
 
 """Created by lashkov on 31.10.18"""
@@ -506,6 +506,7 @@ def sdbw_score(X, labels, centers_id=None, method='Halkidi', alg_noise='filter',
         if lab == -1:
             continue
         labels[labels == lab] = i
+    unique_labels = range(len(unique_labels))
     # move labels to start by 0 including -1 (e.g. -1,0,1,2 -> 0,1,2,3)
     if -1 in np.unique(labels):
         for lab in reversed(list(np.unique(labels))):
