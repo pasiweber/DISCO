@@ -4,6 +4,8 @@ import os
 import sys
 import time
 import psutil
+from copy import deepcopy
+
 
 from collections import defaultdict
 from mpire.pool import WorkerPool
@@ -19,10 +21,9 @@ os.environ["TZ"] = "Europe/Vienna"
 from src.utils.experiments import insert_dict, exec_func
 
 
-def exec_func_(shared_objects, dataset_name, run, func_name, task_timeout):
-    datasets, functions = shared_objects
+def exec_func_(dataset, fn, dataset_name, run, func_name, task_timeout):
     try:
-        return exec_func(datasets[(dataset_name, run)], functions[func_name])
+        return exec_func(dataset, fn)
     except TimeoutError as e:
         print(add_time(f"Timeout - Dataset: {dataset_name}, Run: {run}, Function: {func_name} - `{e}`"))
         return np.nan, task_timeout, task_timeout, np.nan
@@ -60,7 +61,7 @@ def run_multiple_experiments(
             datasets[(dataset_name, run)] = (X_, l_)
 
     async_results = {}
-    pool = WorkerPool(n_jobs=n_jobs, use_dill=True, shared_objects=(datasets, functions))
+    pool = WorkerPool(n_jobs=n_jobs, use_dill=True)
     for dataset_name in dataset_names:
         for run in range(runs):
             for func_name in functions:
@@ -69,9 +70,11 @@ def run_multiple_experiments(
                     print(add_time(f"Skipped - Dataset: {dataset_name}, Run: {run}, Function: {func_name}"))
                     continue
                 print(add_time(f"Calc - Dataset: {dataset_name}, Run: {run}, Function: {func_name}"))
+                dataset = deepcopy(datasets[(dataset_name, run)])
+                fn = deepcopy(functions[func_name])
                 async_idx = (dataset_name, run, func_name)
-                async_results[async_idx] = pool.apply_async(
-                    exec_func_, args=(dataset_name, run, func_name, task_timeout), task_timeout=task_timeout
+                async_results[async_idx] = pool.apply(
+                    exec_func_, args=(dataset, fn, dataset_name, run, func_name, task_timeout), task_timeout=task_timeout
                 )
 
     while async_results:
