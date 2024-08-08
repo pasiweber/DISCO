@@ -164,44 +164,33 @@ def latex_coloring(
     df = df.replace(r"\$(.*?)( \\pm.*?)?\$(.*\\\\)?", value=r"\1", regex=True)
     df = df.astype(float)
 
-    metric_selection = df.columns
+    if metric_selection is None:
+        metric_selection = df.columns
     df_selected = df[metric_selection]
 
-    df_min_positives = df.copy()
-    df_max_positives = df.copy()
+    df_min = df.copy()
+    df_max = df.copy()
     if axis is None:
-        df_min_positives.loc[:, metric_selection] = df_selected.min(axis=axis, skipna=True)
-        df_min_negatives = df_min_positives.copy()
-        df_min_positives.loc[(df_selected < 0) & (df_min_positives.columns == metric_selection)] = 0
-        df_max_positives.loc[:, metric_selection] = df_selected.max(axis=axis, skipna=True)
-        df_max_negatives = df_max_positives.copy()
-        df_max_negatives.loc[(df_selected > 0) & (df_max_negatives.columns == metric_selection)] = 0
+        df_min.loc[:, metric_selection] = df_selected.min(axis=axis, skipna=True)
+        df_max.loc[:, metric_selection] = df_selected.max(axis=axis, skipna=True)
     else:
-        df_min_positives.loc[:, metric_selection] = np.expand_dims(df_selected.min(axis=axis, skipna=True).values, axis=axis)
-        df_min_negatives = df_min_positives.copy()
-        df_min_positives[(df_selected < 0) & (df_min_positives.columns == metric_selection)] = 0
-        df_max_positives.loc[:, metric_selection] = np.expand_dims(df_selected.max(axis=axis, skipna=True).values, axis=axis)
-        df_max_negatives = df_max_positives.copy()
-        df_max_negatives[(df_selected > 0) & (df_max_negatives.columns == metric_selection)] = 0
+        df_min.loc[:, metric_selection] = np.expand_dims(df_selected.min(axis=axis, skipna=True).values, axis=axis)  # type: ignore
+        df_max.loc[:, metric_selection] = np.expand_dims(df_selected.max(axis=axis, skipna=True).values, axis=axis)  # type: ignore
+
+    df2 = df.copy()
+    df2[df_selected < 0] = df[df_selected < 0].min() + df[df_selected < 0]
 
     df_color_saturation = df.copy()
     df_color_saturation.loc[:,:] = 0
-    higher_is_better = df.columns
-    print(df.columns, higher_is_better, df_selected > 0)
-    print("r")
-    df_color_saturation.loc[(df_selected > 0)] = (
-        df.loc[:, higher_is_better][df_selected > 0] - df_min_positives.loc[:, higher_is_better][df_selected > 0]
-    ) / (df_max_positives.loc[:, higher_is_better][df_selected > 0] - df_min_positives.loc[:, higher_is_better][df_selected > 0])
-    df_color_saturation.loc[(df_selected < 0)] = (
-        df_max_negatives.loc[:, higher_is_better][df_selected < 0] - df.loc[:, higher_is_better][df_selected < 0]
-    ) / (df_max_negatives.loc[:, higher_is_better][df_selected < 0] - df_min_negatives.loc[:, higher_is_better][df_selected < 0])
+    if higher_is_better is None:
+        higher_is_better = df.columns
+    df_color_saturation.loc[:, higher_is_better] = (
+        df2.loc[:, higher_is_better] - df_min.loc[:, higher_is_better]
+    ) / (df_max.loc[:, higher_is_better] - df_min.loc[:, higher_is_better])
     lower_is_better = [metric for metric in lower_is_better if metric in df.columns]
-    df_color_saturation.loc[(df_selected > 0)] = (
-        df_max_positives.loc[:, lower_is_better][df_selected > 0] - df.loc[:, lower_is_better][df_selected > 0]
-    ) / (df_max_positives.loc[:, lower_is_better][df_selected > 0] - df_min_positives.loc[:, lower_is_better][df_selected > 0])
-    df_color_saturation.loc[(df_selected < 0)] = (
-        df.loc[:, lower_is_better][df_selected < 0] - df_max_negatives.loc[:, lower_is_better][df_selected < 0]
-    ) / (df_max_negatives.loc[:, lower_is_better][df_selected < 0] - df_min_negatives.loc[:, lower_is_better][df_selected < 0])
+    df_color_saturation.loc[:, lower_is_better] = (
+        df_max.loc[:, lower_is_better] - df.loc[:, lower_is_better]
+    ) / (df_max.loc[:, lower_is_better] - df_min.loc[:, lower_is_better])
     df_color_saturation = df_color_saturation.abs()
     df_color_saturation = df_color_saturation * 65 + 5
     df_color_saturation.replace(np.nan, 0, inplace=True)
@@ -215,6 +204,10 @@ def latex_coloring(
     df_joined_columns = df_latex[df_latex.columns[:]].apply(lambda x: " & ".join(x), axis=1)
     df_joined_columns = df_joined_columns.replace("\\\\", "\\\\\\\\", regex=True)
     df_joined_columns.index = df_joined_columns.index.str.replace("\\", "\\\\")
+
+    for dataset, row in df_joined_columns.items():
+        row = row.replace("$", "\\$")
+        run_regex([r's/%s.*\\\\/%s \\\\/g'%(dataset, row)], path)
 
 
 ### Generate_latex_file function
