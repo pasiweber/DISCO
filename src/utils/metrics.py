@@ -212,8 +212,11 @@ def create_and_filter_df(
 def rescale_measures(df, metrics):
     df = df.copy()
     values = df[df.measure.isin(metrics)].groupby(["measure"])["value"]
+    # df.loc[df.measure.isin(metrics), "value"] = values.transform(
+    #     lambda x: (x - x.min()) / (x.max() - x.min()) if x.max() - x.min() > 3e-6 else np.maximum(x, np.full(len(x), 1))
+    # )
     df.loc[df.measure.isin(metrics), "value"] = values.transform(
-        lambda x: (x - x.min()) / (x.max() - x.min()) if x.max() - x.min() > 3e-6 else np.maximum(x, np.full(len(x), 1))
+        lambda x: x / x.max() if x.max() > 3e-6 else 0
     )
     return df
 
