@@ -74,7 +74,7 @@ def cvnn_score(data, labels, k=10):
     Comp = np.sum(Comp_list)
     Sep = np.max(Sep_list)
 
-    CVNN = Comp + Sep
+    cvnn_value = Comp + Sep
 
     # return result
-    return CVNN
+    return cvnn_value

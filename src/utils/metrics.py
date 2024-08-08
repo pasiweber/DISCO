@@ -33,13 +33,13 @@ METRICS = {
     # "DC_DUNN": DC_DUNN,
     ### Competitors
     "DBCV": lambda X, l: DBCV(X, l, metric="sqeuclidean"),
-    "DBCV_eucl": lambda X, l: DBCV(X, l, metric="euclidean"),
+    # "DBCV_eucl": lambda X, l: DBCV(X, l, metric="euclidean"),
     "DCSI": lambda X, l: DCSI(X, l),  ## min_pts
     "LCCV": LCCV,
     "VIASCKDE": VIASCKDE,
     "CVDD": CVDD,
     "CDBW": CDBW,
-    "CVNN": CVNN,  ## min_pts
+    "CVNN": lambda X, l: CVNN(X, l),  ## min_pts
     # "DSI": DSI,
     ### Gauss
     "SILHOUETTE": SILHOUETTE,

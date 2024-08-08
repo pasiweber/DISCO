@@ -4,8 +4,7 @@ import os
 import sys
 import time
 import psutil
-from copy import deepcopy
-
+import traceback
 
 from collections import defaultdict
 from mpire.pool import WorkerPool
@@ -21,13 +20,16 @@ os.environ["TZ"] = "Europe/Vienna"
 from src.utils.experiments import insert_dict, exec_func
 
 
-def exec_func_(dataset, fn, dataset_name, run, func_name, task_timeout):
+def exec_func_(shared_objects, dataset_name, run, func_name, task_timeout):
+    datasets, functions = shared_objects
     try:
-        return exec_func(dataset, fn)
+        return exec_func(datasets[(dataset_name, run)], functions[func_name])
     except TimeoutError as e:
+        traceback.print_exc()
         print(add_time(f"Timeout - Dataset: {dataset_name}, Run: {run}, Function: {func_name} - `{e}`"))
         return np.nan, task_timeout, task_timeout, np.nan
     except Exception as e:
+        traceback.print_exc()
         print(add_time(f"Error - Dataset: {dataset_name}, Run: {run}, Function: {func_name} - `{e}`"))
         return np.nan, np.nan, np.nan, np.nan
 
@@ -61,7 +63,8 @@ def run_multiple_experiments(
             datasets[(dataset_name, run)] = (X_, l_)
 
     async_results = {}
-    pool = WorkerPool(n_jobs=n_jobs, use_dill=True)
+    if n_jobs != 1:
+        pool = WorkerPool(n_jobs=n_jobs, use_dill=True, shared_objects=(datasets, functions))
     for dataset_name in dataset_names:
         for run in range(runs):
             for func_name in functions:
@@ -70,12 +73,15 @@ def run_multiple_experiments(
                     print(add_time(f"Skipped - Dataset: {dataset_name}, Run: {run}, Function: {func_name}"))
                     continue
                 print(add_time(f"Calc - Dataset: {dataset_name}, Run: {run}, Function: {func_name}"))
-                dataset = deepcopy(datasets[(dataset_name, run)])
-                fn = deepcopy(functions[func_name])
                 async_idx = (dataset_name, run, func_name)
-                async_results[async_idx] = pool.apply(
-                    exec_func_, args=(dataset, fn, dataset_name, run, func_name, task_timeout), task_timeout=task_timeout
-                )
+                if n_jobs != 1:
+                    async_results[async_idx] = pool.apply_async(
+                        exec_func_, args=(dataset_name, run, func_name, task_timeout), task_timeout=task_timeout
+                    )
+                else:
+                    async_results[async_idx] = exec_func_((datasets, functions), dataset_name, run, func_name, task_timeout)
+                    print(add_time(f"Finished - Dataset: {dataset_name}, Run: {run}, Function: {func_name}"))  # - `{value}`
+
 
     while async_results:
         used_ram = round(psutil.virtual_memory().percent, 2)
@@ -87,21 +93,25 @@ def run_multiple_experiments(
         for async_idx, async_result in list(async_results.items()):
             dataset_name, run, func_name = async_idx
 
-            if not async_result.ready():
-                current_tasks += 1
-                if current_tasks <= n_jobs:
-                    print(add_time(f"Calculating - Dataset: {dataset_name}, Run: {run}, Function: {func_name}"))
-                continue
+            if n_jobs != 1:
+                if not async_result.ready():
+                    current_tasks += 1
+                    if current_tasks <= n_jobs:
+                        print(add_time(f"Calculating - Dataset: {dataset_name}, Run: {run}, Function: {func_name}"))
+                    continue
 
-            if not async_result.successful():
-                print(add_time(f"Failed - Dataset: {dataset_name}, Run: {run}, Function: {func_name}"))
-                del async_results[async_idx]
-                continue
+                if not async_result.successful():
+                    print(add_time(f"Failed - Dataset: {dataset_name}, Run: {run}, Function: {func_name}"))
+                    del async_results[async_idx]
+                    continue
 
-            value, real_time, cpu_time, mem_usage = async_result.get()
+                value, real_time, cpu_time, mem_usage = async_result.get()
+                print(add_time(f"Finished - Dataset: {dataset_name}, Run: {run}, Function: {func_name}"))  # - `{value}`
+            else:
+                value, real_time, cpu_time, mem_usage = async_result
+
             del async_results[async_idx]
 
-            print(add_time(f"Finished - Dataset: {dataset_name}, Run: {run}, Function: {func_name}"))  # - `{value}`
             eval_results = defaultdict(list)
             insert_dict(
                 eval_results,
@@ -123,8 +133,10 @@ def run_multiple_experiments(
             df.to_csv(path, index=False, na_rep='nan')
 
     print(add_time("-----"))
-    pool.stop_and_join()
-    pool.terminate()
+
+    if n_jobs != 1:
+        pool.stop_and_join()
+        pool.terminate()
 
     print()
     print(add_time("Finished."))

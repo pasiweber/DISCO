@@ -45,15 +45,11 @@ def merge_dicts(dict1, dict2):
 
 def process_memory():
     process = psutil.Process(os.getpid())
-    mem = process.memory_info().rss
-    for child in process.children(recursive=True):
-        mem += child.memory_info().rss
-    return mem
+    return process.memory_info().rss
 
 
 def exec_func(data, fn, args=[], kwargs={}):
     """Runs function for given dataset with data `X` and labels `l`."""
-
     start_time = time.time()
     start_process_time = time.process_time()
     mem_before = process_memory()
@@ -68,10 +64,11 @@ def exec_func(data, fn, args=[], kwargs={}):
     return value, end_time - start_time, end_process_time - start_process_time, mem_after - mem_before
 
 
-def calc_eval_measures(X, l, name=None, metrics=METRICS, runs=10, n_jobs=64, task_timeout=None):
+def calc_eval_measures(X, l, name=None, metrics=METRICS, runs=10, n_jobs=1, task_timeout=None):
     """Calculate all evaluation measures for a given dataset with data `X` and labels `l`."""
 
-    pool = WorkerPool(n_jobs=n_jobs, use_dill=True)
+    if n_jobs != 1:
+        pool = WorkerPool(n_jobs=n_jobs, use_dill=True)
     async_results = {}
 
     np.random.seed(0)
@@ -85,14 +82,21 @@ def calc_eval_measures(X, l, name=None, metrics=METRICS, runs=10, n_jobs=64, tas
 
         for metric_name, metric_fn in metrics.items():
             async_idx = (run, metric_name)
-            async_results[async_idx] = pool.apply_async(
-                exec_func, args=((X_, l_), metric_fn), task_timeout=task_timeout
-            )
+            if n_jobs != 1:
+                async_results[async_idx] = pool.apply_async(
+                    exec_func, args=((X_, l_), metric_fn), task_timeout=task_timeout
+                )
+            else:
+                async_results[async_idx] = exec_func((X_, l_), metric_fn)
 
     eval_results = defaultdict(list)
     for async_idx, async_result in async_results.items():
         (run, metric_name) = async_idx
-        value, real_time, cpu_time, mem_usage = async_result.get()
+        if n_jobs != 1:
+            value, real_time, cpu_time, mem_usage = async_result.get()
+        else:
+            value, real_time, cpu_time, mem_usage = async_result
+
         insert_dict(
             eval_results,
             {
@@ -106,13 +110,14 @@ def calc_eval_measures(X, l, name=None, metrics=METRICS, runs=10, n_jobs=64, tas
             },
         )
 
-    pool.stop_and_join()
-    pool.terminate()
+    if n_jobs != 1:
+        pool.stop_and_join()
+        pool.terminate()
     return eval_results
 
 
 def calc_eval_measures_for_multiple_datasets(
-    data, param_values, metrics=METRICS, n_jobs=64, task_timeout=None
+    data, param_values, metrics=METRICS, n_jobs=1, task_timeout=None
 ):
     """Calculates all evaluation measures for all datasets in data.
 
@@ -120,7 +125,8 @@ def calc_eval_measures_for_multiple_datasets(
         data: 2d matrix of type [datasets x runs]
     """
 
-    pool = WorkerPool(n_jobs=n_jobs, use_dill=True)
+    if n_jobs != 1:
+        pool = WorkerPool(n_jobs=n_jobs, use_dill=True)
     async_results = {}
 
     for param_value in range(len(param_values)):
@@ -129,14 +135,21 @@ def calc_eval_measures_for_multiple_datasets(
 
             for metric_name, metric_fn in metrics.items():
                 async_idx = (param_value, run, metric_name)
-                async_results[async_idx] = pool.apply_async(
-                    exec_func, args=((X, l), metric_fn), task_timeout=task_timeout
-                )
+                if n_jobs != 1:
+                    async_results[async_idx] = pool.apply_async(
+                        exec_func, args=((X, l), metric_fn), task_timeout=task_timeout
+                    )
+                else:
+                    async_results[async_idx] = exec_func((X, l), metric_fn)
 
     eval_results = defaultdict(list)
     for async_idx, async_result in async_results.items():
         (param_value, run, metric_name) = async_idx
-        value, real_time, cpu_time, mem_usage = async_result.get()
+        if n_jobs != 1:
+            value, real_time, cpu_time, mem_usage = async_result.get()
+        else:
+            value, real_time, cpu_time, mem_usage = async_result
+
         insert_dict(
             eval_results,
             {
@@ -150,6 +163,7 @@ def calc_eval_measures_for_multiple_datasets(
             },
         )
 
-    pool.stop_and_join()
-    pool.terminate()
+    if n_jobs != 1:
+        pool.stop_and_join()
+        pool.terminate()
     return eval_results

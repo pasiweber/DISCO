@@ -5,6 +5,8 @@ import matplotlib.gridspec as gridspec
 import seaborn as sns
 from src.utils.metrics import SELECTED_METRICS, RESCALED_METRICS, METRIC_ABBREV
 
+GRAY = (0.6392156862745098, 0.6392156862745098, 0.6392156862745098)
+
 
 def plot_datasets(
     data,
@@ -75,6 +77,7 @@ def plot_lineplot(
     font_size=16,
     ncol=4,
     row_wise=True,
+    palette=None,
 ):
     """Plot a line plot for a dataframe."""
     plt.rcParams.update({"font.size": font_size})
@@ -91,7 +94,7 @@ def plot_lineplot(
         x_axis = x_label
 
     if y_label is not None:
-        df = df.rename(index={y_axis: y_label})
+        df = df.rename(columns={y_axis: y_label})
         y_axis = y_label
 
     if grouping is not None:
@@ -110,7 +113,8 @@ def plot_lineplot(
         return array * ((len(order) - 1 + len(array)) // len(array))
 
     markers = ["o"] + repeat(["v", "^", "<", ">", "p", "P", "X", "d", "D", "H"])
-    palette = ["black"] + repeat(sns.color_palette("bright"))
+    if palette is None:
+        palette = ["black"] + repeat(sns.color_palette("bright"))
     sizes = [highlight_size] + repeat([1])
     dashes = [(1, 0)] + repeat([(1, 2), (5, 2), (3, 3, 1, 3)])
 
