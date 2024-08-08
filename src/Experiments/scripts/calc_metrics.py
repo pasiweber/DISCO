@@ -44,7 +44,7 @@ elif sys.argv[1] == "real_world_standardized":
         "dataset_id_dict": {dataset.name: dataset.id for dataset in RealWorldDatasets.get_experiments_list()},
         "dataset_load_fn_dict": {dataset.name: lambda dataset=dataset: dataset.standardized_data_cached_no_noise for dataset in RealWorldDatasets.get_experiments_list()},
         "functions": METRICS,
-        "n_jobs": 1,
+        "n_jobs": 64,
         "runs": 10,
     }
 
