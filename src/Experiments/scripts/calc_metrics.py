@@ -14,8 +14,8 @@ RESULTS_PATH = f"{DISCO_ROOT_PATH}/results/"
 TASK_TIMEOUT = 12 * 60 * 60  # 12 hours
 
 
-# del ALL_METRICS["CDBW"]
-# del ALL_METRICS["CVDD"]
+# del METRICS["CDBW"]
+# del METRICS["CVDD"]
 # del METRICS["LCCV"]
 # del METRICS["DBCV"]
 # del METRICS["DBCV_eucl"]
@@ -44,7 +44,7 @@ elif sys.argv[1] == "real_world_standardized":
         "dataset_id_dict": {dataset.name: dataset.id for dataset in RealWorldDatasets.get_experiments_list()},
         "dataset_load_fn_dict": {dataset.name: lambda dataset=dataset: dataset.standardized_data_cached_no_noise for dataset in RealWorldDatasets.get_experiments_list()},
         "functions": METRICS,
-        "n_jobs": 10,
+        "n_jobs": 1,
         "runs": 10,
     }
 

@@ -78,15 +78,18 @@ def plot_lineplot(
     ncol=4,
     row_wise=True,
     palette=None,
+    fig=None,
+    ax=None,
 ):
     """Plot a line plot for a dataframe."""
     plt.rcParams.update({"font.size": font_size})
 
-    fig = plt.figure(
-        figsize=figsize,
-        dpi=dpi,
-        layout="tight",
-    )
+    if fig is None:
+        fig = plt.figure(
+            figsize=figsize,
+            dpi=dpi,
+            layout="tight",
+        )
     highlight -= 1
 
     if x_label is not None:
@@ -116,6 +119,7 @@ def plot_lineplot(
     if palette is None:
         palette = ["black"] + repeat(sns.color_palette("bright"))
     sizes = [highlight_size] + repeat([1])
+    # sizes = np.array(sizes) / 2
     dashes = [(1, 0)] + repeat([(1, 2), (5, 2), (3, 3, 1, 3)])
 
     ax = sns.lineplot(
@@ -123,7 +127,7 @@ def plot_lineplot(
         x=x_axis,
         y=y_axis,
         markers=dict(zip(order, markers)),
-        # markersize=7,
+        # markersize=5,
         hue=grouping,
         palette=dict(zip(order, palette)),
         hue_order=order[::-1],
@@ -132,6 +136,7 @@ def plot_lineplot(
         size=grouping,
         sizes=dict(zip(order, sizes)),
         errorbar=errorbar,
+        ax=ax,
     )
 
     ax.set_xlim(*x_range)
@@ -146,14 +151,14 @@ def plot_lineplot(
     ax.grid(color="lightgray")
 
     ### Legend
-    handles, _ = plt.gca().get_legend_handles_labels()
+    handles, _ = ax.get_legend_handles_labels()
     inverse_index = np.empty(len(order), dtype=int)
     inverse_index[highlight_index] = np.arange(0, len(order))
     if row_wise:
         row_wise_index = sum((list(range(len(order))[i::ncol]) for i in range(ncol)), [])
     else:
         row_wise_index = list(range(len(order)))
-    leg = plt.legend(
+    leg = fig.gca().legend(
         handles=list(np.array(handles[::-1])[inverse_index][row_wise_index]),
         labels=list(np.array(order)[inverse_index][row_wise_index]),
         # loc="center left",

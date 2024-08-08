@@ -31,9 +31,9 @@ def optimal_k_dbscan(X, l):
 
 CLUSTER_ALGORITHMS = {
     "GroundTruth": lambda X, l: l,
-    "OptimalKDBSCAN": lambda X, l: optimal_k_dbscan(X, l),
+    # "OptimalKDBSCAN": lambda X, l: optimal_k_dbscan(X, l),
     "DBSCAN": lambda X, l: DBSCAN(DCTree(X).get_eps_for_k(len(set(l)))).fit(X).labels_,
-    "KCenter": lambda X, l: DCTree(X).get_k_center(len(set(l))),
+    # "KCenter": lambda X, l: DCTree(X).get_k_center(len(set(l))),
     "HDBSCAN": lambda X, l: HDBSCAN().fit(X).labels_,
     "DPC": lambda X, l: DensityPeakCluster().fit(X).labels_,
     "SpectralClustering": lambda X, l: SpectralClustering(len(set(l))).fit(X).labels_,
@@ -51,7 +51,7 @@ SELECTED_CLUSTER_ALGORITHMS = CLUSTER_ALGORITHMS.keys()
 CLUSTER_ABBREV = {
     "GroundTruth": "GT",
     "OptimalKDBSCAN": "K'-DBSCAN",
-    "DBSCAN": "K-DBSCAN",
+    "DBSCAN": "DBSCAN",
     "KCenter": "KCenter",
     "HDBSCAN": "HDBSCAN",
     "DPC": "DPC",

@@ -50,8 +50,8 @@ def calc_pairwise_column_aggregation_func_dict(df, columns, aggregation_funcs):
     return pairwise_column_aggregation_func_data_dict
 
 
-def gather_and_aggregate_data(path, columns, aggregation_funcs):
-    dataframes = [pd.read_csv(path) for path in glob.glob(f"{path}*/*")]
+def gather_and_aggregate_data(paths, columns, aggregation_funcs):
+    dataframes = [pd.read_csv(file_path) for path in paths for file_path in glob.glob(f"{path}*/*")]
     df = pd.concat(dataframes)
 
     data_dict = calc_pairwise_column_aggregation_func_dict(df, columns, aggregation_funcs)
@@ -164,31 +164,50 @@ def latex_coloring(
     df = df.replace(r"\$(.*?)( \\pm.*?)?\$(.*\\\\)?", value=r"\1", regex=True)
     df = df.astype(float)
 
-    if metric_selection is None:
-        metric_selection = df.columns
+    metric_selection = df.columns
     df_selected = df[metric_selection]
 
-    df_min = df.copy()
-    df_max = df.copy()
-    df_min.loc[:, metric_selection] = np.expand_dims(df_selected.min(axis=axis, skipna=True).values, axis=axis)  # type: ignore
-    df_max.loc[:, metric_selection] = np.expand_dims(df_selected.max(axis=axis, skipna=True).values, axis=axis)  # type: ignore
+    df_min_positives = df.copy()
+    df_max_positives = df.copy()
+    if axis is None:
+        df_min_positives.loc[:, metric_selection] = df_selected.min(axis=axis, skipna=True)
+        df_min_negatives = df_min_positives.copy()
+        df_min_positives.loc[(df_selected < 0) & (df_min_positives.columns == metric_selection)] = 0
+        df_max_positives.loc[:, metric_selection] = df_selected.max(axis=axis, skipna=True)
+        df_max_negatives = df_max_positives.copy()
+        df_max_negatives.loc[(df_selected > 0) & (df_max_negatives.columns == metric_selection)] = 0
+    else:
+        df_min_positives.loc[:, metric_selection] = np.expand_dims(df_selected.min(axis=axis, skipna=True).values, axis=axis)
+        df_min_negatives = df_min_positives.copy()
+        df_min_positives[(df_selected < 0) & (df_min_positives.columns == metric_selection)] = 0
+        df_max_positives.loc[:, metric_selection] = np.expand_dims(df_selected.max(axis=axis, skipna=True).values, axis=axis)
+        df_max_negatives = df_max_positives.copy()
+        df_max_negatives[(df_selected > 0) & (df_max_negatives.columns == metric_selection)] = 0
 
     df_color_saturation = df.copy()
     df_color_saturation.loc[:,:] = 0
-    if higher_is_better is None:
-        higher_is_better = df.columns
-    df_color_saturation.loc[:, higher_is_better] = (
-        df.loc[:, higher_is_better] - df_min.loc[:, higher_is_better]
-    ) / (df_max.loc[:, higher_is_better] - df_min.loc[:, higher_is_better])
+    higher_is_better = df.columns
+    print(df.columns, higher_is_better, df_selected > 0)
+    print("r")
+    df_color_saturation.loc[(df_selected > 0)] = (
+        df.loc[:, higher_is_better][df_selected > 0] - df_min_positives.loc[:, higher_is_better][df_selected > 0]
+    ) / (df_max_positives.loc[:, higher_is_better][df_selected > 0] - df_min_positives.loc[:, higher_is_better][df_selected > 0])
+    df_color_saturation.loc[(df_selected < 0)] = (
+        df_max_negatives.loc[:, higher_is_better][df_selected < 0] - df.loc[:, higher_is_better][df_selected < 0]
+    ) / (df_max_negatives.loc[:, higher_is_better][df_selected < 0] - df_min_negatives.loc[:, higher_is_better][df_selected < 0])
     lower_is_better = [metric for metric in lower_is_better if metric in df.columns]
-    df_color_saturation.loc[:, lower_is_better] = (
-        df_max.loc[:, lower_is_better] - df.loc[:, lower_is_better]
-    ) / (df_max.loc[:, lower_is_better] - df_min.loc[:, lower_is_better])
+    df_color_saturation.loc[(df_selected > 0)] = (
+        df_max_positives.loc[:, lower_is_better][df_selected > 0] - df.loc[:, lower_is_better][df_selected > 0]
+    ) / (df_max_positives.loc[:, lower_is_better][df_selected > 0] - df_min_positives.loc[:, lower_is_better][df_selected > 0])
+    df_color_saturation.loc[(df_selected < 0)] = (
+        df.loc[:, lower_is_better][df_selected < 0] - df_max_negatives.loc[:, lower_is_better][df_selected < 0]
+    ) / (df_max_negatives.loc[:, lower_is_better][df_selected < 0] - df_min_negatives.loc[:, lower_is_better][df_selected < 0])
+    df_color_saturation = df_color_saturation.abs()
     df_color_saturation = df_color_saturation * 65 + 5
     df_color_saturation.replace(np.nan, 0, inplace=True)
     df_color_saturation = df_color_saturation.astype(int)
 
-    df_latex = df.astype(str).combine(df_color_saturation.astype(str), lambda value, color_saturation: "\\cellcolor{" + "Green" + "!" + color_saturation + r"} $" + value)
+    df_latex = df.astype(str).combine(df_color_saturation.astype(str), lambda value, color_saturation: "\\cellcolor{" + value.apply(lambda x: "Green" if float(x) >= 0 else "Red") + "!" + color_saturation + r"} $" + value)
     df_latex = df_latex + df_std
     df_latex = df_latex.replace(r" $", value="", regex=True)
     df_latex = df_latex + "$"
@@ -197,16 +216,13 @@ def latex_coloring(
     df_joined_columns = df_joined_columns.replace("\\\\", "\\\\\\\\", regex=True)
     df_joined_columns.index = df_joined_columns.index.str.replace("\\", "\\\\")
 
-    for dataset, row in df_joined_columns.items():
-        row = row.replace("$", "\\$")
-        run_regex([r's/%s.*\\\\/%s \\\\/g'%(dataset, row)], path)
+
+### Generate_latex_file function
 from clustpy.utils import evaluation_df_to_latex_table
 from src.utils.metrics import METRIC_ABBREV_TABLES
 
-
-### Generate_latex_file function
 def generate_latex_file(
-    path,
+    paths,
     latex_path,
     dataset_names,
     aggregation_funcs=["mean", "std"],
@@ -216,13 +232,13 @@ def generate_latex_file(
     caption="TODO",
     categories=[],
     precision=3,
-    latex_coloring_axis=None,
+    latex_coloring_axis="no coloring",
     latex_coloring_selection=None,
     higher_is_better=None,
     lower_is_better=[],
 ):
     df_matrix = gather_and_aggregate_data(
-        path, columns=selection, aggregation_funcs=aggregation_funcs
+        paths, columns=selection, aggregation_funcs=aggregation_funcs
     )
     df_reindexed = calc_indices_and_reindex(
         df_matrix, dataset_names, aggregation_funcs, metrics, selection, precision=precision
@@ -236,7 +252,7 @@ def generate_latex_file(
         decimal_places=2,
     )
 
-    if latex_coloring_axis is not None:
+    if latex_coloring_axis != "no coloring":
         latex_coloring(latex_path, skiprows=6, axis=latex_coloring_axis, metric_selection=latex_coloring_selection, higher_is_better=higher_is_better, lower_is_better=lower_is_better)
 
     regex_file(latex_path, caption=caption, categories=categories, metric_abbrev=metric_abbrev)

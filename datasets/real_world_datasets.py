@@ -41,7 +41,16 @@ class Datasets(AbstractDatasets):
 
     @classmethod
     def __get_excluded(cls):
-        return []
+        return [
+            cls.MNIST,
+            cls.FMNIST,
+            cls.KMNIST,
+            cls.Keck,
+            cls.Weizmann,
+            cls.COIL100,
+            cls.COIL20,
+            cls.cmu_faces,
+        ]
 
     def load_dataset(self):
         match self:
