@@ -82,6 +82,8 @@ def plot_lineplot(
     ax=None,
     markersize=7,
     sizes=None,
+    dashes=None,
+    markers=None,
 ):
     """Plot a line plot for a dataframe."""
     plt.rcParams.update({"font.size": font_size})
@@ -117,14 +119,16 @@ def plot_lineplot(
     def repeat(array):
         return array * ((len(order) - 1 + len(array)) // len(array))
 
-    markers = ["o"] + repeat(["v", "^", "<", ">", "p", "P", "X", "d", "D", "H"])
+    if markers is None:
+        markers = ["o"] + repeat(["v", "^", "<", ">", "p", "P", "X", "d", "D", "H"])
     if palette is None:
         palette = ["black"] + repeat(sns.color_palette("bright"))
     if sizes is None:
         sizes = [highlight_size] + repeat([1])
     # sizes = np.array(sizes) * 2
     # sizes = np.array(sizes) / 2
-    dashes = [(1, 0)] + repeat([(1, 2), (4, 2), (3, 2, 1, 2)])
+    if dashes is None:
+        dashes = [(1, 0)] + repeat([(1, 2), (4, 2), (3, 2, 1, 2)])
 
     ax = sns.lineplot(
         data=df,
