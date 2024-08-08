@@ -80,7 +80,7 @@ def plot_lineplot(
     palette=None,
     fig=None,
     ax=None,
-    markersize=7,
+    markersize=10,
     sizes=None,
     dashes=None,
     markers=None,
