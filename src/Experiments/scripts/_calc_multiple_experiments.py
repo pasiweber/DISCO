@@ -1,14 +1,13 @@
-import numpy as np
-import pandas as pd
 import os
 import sys
 import time
-import psutil
 import traceback
-
 from collections import defaultdict
+
+import numpy as np
+import pandas as pd
+import psutil
 from mpire.pool import WorkerPool
-from tqdm import tqdm
 
 np.set_printoptions(threshold=sys.maxsize)
 
@@ -17,7 +16,7 @@ DISCO_ROOT_PATH = "/export/share/pascalw777dm/DISCO"
 sys.path.append(DISCO_ROOT_PATH)
 os.environ["TZ"] = "Europe/Vienna"
 
-from src.utils.experiments import insert_dict, exec_func
+from src.utils.experiments import exec_func, insert_dict
 
 
 def exec_func_(shared_objects, dataset_name, run, func_name, task_timeout):
@@ -32,6 +31,7 @@ def exec_func_(shared_objects, dataset_name, run, func_name, task_timeout):
         traceback.print_exc()
         print(add_time(f"Error - Dataset: {dataset_name}, Run: {run}, Function: {func_name} - `{e}`"))
         return np.nan, np.nan, np.nan, np.nan
+
 
 def run_multiple_experiments(
     save_folder,
@@ -79,9 +79,12 @@ def run_multiple_experiments(
                         exec_func_, args=(dataset_name, run, func_name, task_timeout), task_timeout=task_timeout
                     )
                 else:
-                    async_results[async_idx] = exec_func_((datasets, functions), dataset_name, run, func_name, task_timeout)
-                    print(add_time(f"Finished - Dataset: {dataset_name}, Run: {run}, Function: {func_name}"))  # - `{value}`
-
+                    async_results[async_idx] = exec_func_(
+                        (datasets, functions), dataset_name, run, func_name, task_timeout
+                    )
+                    print(
+                        add_time(f"Finished - Dataset: {dataset_name}, Run: {run}, Function: {func_name}")
+                    )  # - `{value}`
 
     while async_results:
         used_ram = round(psutil.virtual_memory().percent, 2)
@@ -127,10 +130,10 @@ def run_multiple_experiments(
             )
             np.set_printoptions(threshold=sys.maxsize)
             df = pd.DataFrame(data=eval_results)
-            df['value'] = df['value'].apply(lambda x: str(x).replace('\n', ''))
+            df["value"] = df["value"].apply(lambda x: str(x).replace("\n", ""))
             path = f"{save_folder}/{dataset_id_dict[dataset_name]}/{func_name}_{run}.csv"
             os.makedirs(os.path.dirname(path), exist_ok=True)
-            df.to_csv(path, index=False, na_rep='nan')
+            df.to_csv(path, index=False, na_rep="nan")
 
     print(add_time("-----"))
 
