@@ -216,7 +216,7 @@ class DCTree:
                 Tuple[np.ndarray, Sequence[int], np.ndarray, Sequence[int]],
             ],
         ],
-    ) -> Union[Union[_DCNode, List[_DCNode]], Union[np.float64, np.ndarray]]:
+    ) -> Union[Union[_DCNode, List[_DCNode]], Union[float, np.ndarray]]:
         """
         Returns the _DCNode of given index if `arg` is an integer or a Sequence.
 
@@ -296,10 +296,10 @@ class DCTree:
             f"\n   {padding.replace("|", " ")}// #endregion"
         )
 
-    def dc_dist(self, i: int, j: int) -> np.float64:
+    def dc_dist(self, i: int, j: int) -> float:
         """Returns the dc_distance from points[i] to points[j] in O(1) time."""
         if i == j:
-            return np.float64(0)
+            return 0
         return self._lca(i, j).dist
 
     def _lca(self, i: int, j: int) -> _DCNode:
@@ -437,7 +437,7 @@ class DCTree:
         """Kruskal's algorithm to build up the DCTree with the precomputed
         and sorted mst_edges in O(n) time."""
         union_find = _UnionFind(self.n)
-        node = _DCNode(id=0, dist=None, leaves=[0])
+        node = _DCNode(id=0, dist=0.0, leaves=[0])
         idx = self.n
         k = len(mst_edges)
         for i, j, dist in mst_edges:
@@ -584,7 +584,7 @@ def save(dc_tree: DCTree, file_path: str) -> None:
 
 def _deserialize(data: List[str]) -> _DCNode:
     id, dist = data[0].split("|")
-    root = _DCNode(id=int(id[1:]), dist=np.float64(dist), leaves=[])
+    root = _DCNode(id=int(id[1:]), dist=float(dist), leaves=[])
 
     DOWN, UP = 0, 1
     stack: deque[Literal[0, 1]] = deque([UP, DOWN, DOWN])
@@ -602,9 +602,9 @@ def _deserialize(data: List[str]) -> _DCNode:
                 continue
             id, dist = data[pos].split("|")
             if id[0] != "'":
-                res.append(_DCNode(id=int(id), dist=None, leaves=[int(id)]))
+                res.append(_DCNode(id=int(id), dist=0, leaves=[int(id)]))
                 continue
-            inode = _DCNode(id=int(id[1:]), dist=np.float64(dist), leaves=[])
+            inode = _DCNode(id=int(id[1:]), dist=float(dist), leaves=[])
             nodes.append(inode)
             stack.extend([UP, DOWN, DOWN])
 
@@ -698,7 +698,7 @@ def calculate_reachability_distance(
 
 class _DCNode:
     id: int
-    dist: Optional[np.float64]
+    dist: float
     leaves: List[int]
     left: Optional[_DCNode]
     right: Optional[_DCNode]
@@ -708,7 +708,7 @@ class _DCNode:
     def __init__(
         self,
         id: int,
-        dist: Optional[np.float64],
+        dist: float,
         leaves: List[int],
         left: Optional[_DCNode] = None,
         right: Optional[_DCNode] = None,
@@ -744,7 +744,7 @@ class _UnionFind:
     rank: List[int]
 
     def __init__(self, n: int):
-        self.root = [_DCNode(id=i, dist=None, leaves=[i]) for i in range(n)]
+        self.root = [_DCNode(id=i, dist=0, leaves=[i]) for i in range(n)]
         self.parent = list(range(n))
         self.rank = [1] * n
 

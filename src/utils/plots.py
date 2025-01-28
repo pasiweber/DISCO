@@ -166,7 +166,7 @@ def plot_lineplot(
         row_wise_index = sum((list(range(len(order))[i::ncol]) for i in range(ncol)), [])
     else:
         row_wise_index = list(range(len(order)))
-    leg = fig.gca().legend(
+    leg = ax.legend(
         handles=list(np.array(handles[::-1])[inverse_index][row_wise_index]),
         labels=list(np.array(order)[inverse_index][row_wise_index]),
         # loc="center left",

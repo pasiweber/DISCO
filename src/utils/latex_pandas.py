@@ -166,7 +166,7 @@ def latex_coloring(
 
     if metric_selection is None:
         metric_selection = df.columns
-    df_selected = df[metric_selection]
+    df_selected = df[metric_selection].abs()
 
     df_min = df.copy()
     df_max = df.copy()
@@ -178,7 +178,7 @@ def latex_coloring(
         df_max.loc[:, metric_selection] = np.expand_dims(df_selected.max(axis=axis, skipna=True).values, axis=axis)  # type: ignore
 
     df2 = df.copy()
-    df2[df_selected < 0] = df[df_selected < 0].min() + df[df_selected < 0]
+    df2[df_selected < 0] = df_min[df_selected < 0] + df[df_selected < 0]
 
     df_color_saturation = df.copy()
     df_color_saturation.loc[:,:] = 0

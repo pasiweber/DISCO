@@ -20,14 +20,14 @@ def sample_datasets(datasets, func):
     return np.apply_along_axis(lambda data: apply_to_sample(data), 2, datasets)
 
 
-def add_noise(X, l, n_noise, eps, noise_eps):
+def add_noise(X, l, n_noise, eps, noise_eps, border=0):
     """Add noise to data with at least eps distance to the data."""
 
     noise = np.empty((n_noise, X.shape[1]))
     noise_too_near = np.array(range(len(noise)))
     while len(noise_too_near) > 0:
         noise[noise_too_near] = np.random.uniform(
-            np.min(X, axis=0), np.max(X, axis=0), size=(len(noise_too_near), X.shape[1])
+            np.min(X - border, axis=0), np.max(X + border, axis=0), size=(len(noise_too_near), X.shape[1])
         )
         nbrs_points = NearestNeighbors(n_neighbors=1).fit(X)
         dists_points = nbrs_points.kneighbors(noise)[0]

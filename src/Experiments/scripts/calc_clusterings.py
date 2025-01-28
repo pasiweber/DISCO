@@ -22,7 +22,7 @@ if sys.argv[1] == "real_world":
         "dataset_id_dict": {dataset.name: dataset.id for dataset in RealWorldDatasets.get_experiments_list()},
         "dataset_load_fn_dict": {dataset.name: lambda dataset=dataset: dataset.data_cached for dataset in RealWorldDatasets.get_experiments_list()},
         "functions": CLUSTER_ALGORITHMS,
-        "n_jobs": 1,
+        "n_jobs": 50,
         "runs": 1,
     }
 
@@ -34,7 +34,7 @@ elif sys.argv[1] == "real_world_standardized":
         "dataset_id_dict": {dataset.name: dataset.id for dataset in RealWorldDatasets.get_experiments_list()},
         "dataset_load_fn_dict": {dataset.name: lambda dataset=dataset: dataset.standardized_data_cached for dataset in RealWorldDatasets.get_experiments_list()},
         "functions": CLUSTER_ALGORITHMS,
-        "n_jobs": 1,
+        "n_jobs": 50,
         "runs": 1,
     }
 

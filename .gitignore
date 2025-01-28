@@ -10,6 +10,7 @@ results/**/*.csv
 latex/
 latex
 clusterings/
+clusterings_metrics/
 clustering_results/
 clustering_results2/
 
@@ -19,3 +20,5 @@ clustering_results2/
 
 
 TODOs.txt
+
+ruff.toml

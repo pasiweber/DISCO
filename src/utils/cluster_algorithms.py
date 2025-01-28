@@ -40,6 +40,8 @@ CLUSTER_ALGORITHMS = {
     "Agglomerative": lambda X, l: AgglomerativeClustering(len(set(l))).fit(X).labels_,
     "MeanShift": lambda X, l: MeanShift().fit(X).labels_,
     "KMeans": lambda X, l: KMeans(len(set(l))).fit(X).labels_,
+    "Random_k": lambda X, l: np.random.choice(len(set(l)), size=len(l)),
+    "Random_100": lambda X, l: np.random.choice(100, size=len(l)),
 }
 
 # SELECTED_CLUSTER_ALGORITHMS = [

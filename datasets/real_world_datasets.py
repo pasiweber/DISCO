@@ -48,8 +48,8 @@ class Datasets(AbstractDatasets):
             cls.Keck,
             cls.Weizmann,
             cls.COIL100,
-            cls.COIL20,
-            cls.cmu_faces,
+            # cls.COIL20,
+            # cls.cmu_faces,
         ]
 
     def load_dataset(self):
