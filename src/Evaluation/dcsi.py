@@ -19,24 +19,24 @@ from scipy.sparse.csgraph import minimum_spanning_tree
 
 def dcsi_score(data, partition, min_pts=5):
     clusters = partition
-    for i in range(len(clusters)):
-        if np.sum(partition == clusters[i]) == 1:
-            partition[partition == clusters[i]] = -1
-            clusters[i] = -1
+    #for i in range(len(clusters)):
+    #    if np.sum(partition == clusters[i]) == 1:
+    #        partition[partition == clusters[i]] = -1
+    #        clusters[i] = -1
     # all clusters except for -1
-    clusters = np.setdiff1d(clusters, -1)
+    #clusters = np.setdiff1d(clusters, -1)
     # if no clusters left or just one cluster left return 0
-    if len(clusters) == 0 or len(clusters) == 1:
-        return 0
+    #if len(clusters) == 0 or len(clusters) == 1:
+    #    return 0
     # exclude noise points from dataset
-    data = data[partition != -1, :]
+    #data = data[partition != -1, :]
     # calculate squared euclidean distance
     dist = squareform(pdist(data)) ** 2
 
     # original labelling
     poriginal = partition
     # exclude noise points from labeling
-    partition = partition[partition != -1]
+    #partition = partition[partition != -1]
     cluster_labels = np.unique(partition)
     n_clusters = len(cluster_labels)
     dcsi = 0
@@ -44,13 +44,13 @@ def dcsi_score(data, partition, min_pts=5):
     CORE_PTS = {}
     for i in range(0, n_clusters):
         # indices of objects in cluster i
-        objects_cl = np.where(partition == clusters[i])[0]
+        objects_cl = np.where(partition == cluster_labels[i])[0]
         # distance in the cluster
         dist_i = dist[np.ix_(objects_cl, objects_cl)]
         epsilon = calculate_epsilon(dist_i, 2 * min_pts)
         CORE_PTS[cluster_labels[i]] = core_points(dist_i, epsilon, min_pts)
-        if len(CORE_PTS[cluster_labels[i]]) == 0:
-            return -1
+        #if len(CORE_PTS[cluster_labels[i]]) == 0:
+        #    return -1
         dist_i = dist_i[np.ix_(CORE_PTS[cluster_labels[i]], CORE_PTS[cluster_labels[i]])]
         MST[cluster_labels[i]] = minimal_spanning_tree(dist_i)
 
@@ -190,6 +190,39 @@ calc_DCSI <- function(dist, labels, minPts = 5){
   # connectedness = maximum distance in a MST built of the core points of cluster i
   Sep_list <- list()
   Conn_list <- list()
+
+  for(i in unique(labels_core)){
+    
+    ind_i <- which(labels_core == i) 
+    
+    dist_i <- dist_core[ind_i, -ind_i]
+    sep_i <- min(dist_i)
+    
+    
+    Sep_list <- append(Sep_list, sep_i)
+    
+    
+    # Connectedness: maximum distance in a MST built of the core points of cluster i
+    conn_i <- max(pegas::mst(dist_core[ind_i, ind_i])[, 3])
+    
+    
+    
+    Conn_list <- append(Conn_list, list(conn_i))
+    
+  }
+  
+  Sep <- min(unlist(Sep_list)) # the higher the better
+  Conn <- max(unlist(Conn_list)) # the smaller the better
+  # consider ratio Sep/Conn -> the higher the better
+  # values should be in [0,1] with 1 = highest value
+  DCSI <- (Sep/Conn)/(1+Sep/Conn) # = 1/(1+Conn/Sep)
+  
+  result <- list("DCSI" = DCSI, "Sep_DCSI" = Sep, "Conn_DCSI" = Conn)
+  
+  # return result
+  return(result)
+  
+}
 
 
 
