@@ -51,18 +51,18 @@ def cvnn_score(data, labels, k=10):
 
     for i in np.unique(labels):
         # add this to ensure that noise is not seen as a separate cluster
-        #if i != -1:
-        ind_i = np.where(labels == i)[0]
+        if i != -1:
+            ind_i = np.where(labels == i)[0]
 
-        # Separation: proportion of k-NN of objects in i that don't belong to i
-        knn_i = knn_matrix[ind_i, :][:, ind_i]
-        sep_i = np.sum(knn_i) / (len(ind_i) * k)
-        Sep_list.append(sep_i)
+            # Separation: proportion of k-NN of objects in i that don't belong to i
+            knn_i = knn_matrix[ind_i, :][:, ind_i]
+            sep_i = np.sum(knn_i) / (len(ind_i) * k)
+            Sep_list.append(sep_i)
 
-        # Compactness: average pairwise distance between objects in same cluster
-        dist_i = dist[np.ix_(ind_i, ind_i)]
-        comp_i = np.mean(dist_i[np.triu_indices(len(ind_i), 1)])
-        Comp_list.append(comp_i)
+            # Compactness: average pairwise distance between objects in same cluster
+            dist_i = dist[np.ix_(ind_i, ind_i)]
+            comp_i = np.mean(dist_i[np.triu_indices(len(ind_i), 1)])
+            Comp_list.append(comp_i)
 
     # calculate CVNN
     # Modification for compactness: mean instead of sum, normalize by mean distance so that CVNN of different data can be compared
