@@ -15,7 +15,7 @@ from src.utils.metrics import METRICS
 from mpire.pool import WorkerPool
 
 
-CACHE_FOLDER = "./.cache/"
+CACHE_FOLDER = "/export/share/pascalw777dm/DISCO/.cache/"
 
 
 def cache(filename, func, args=[], kwargs={}, recalc=False):

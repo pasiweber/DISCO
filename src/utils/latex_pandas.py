@@ -147,10 +147,11 @@ def latex_coloring(
     metric_selection=None,
     higher_is_better=None,
     lower_is_better=[],
+    bold_underline=True,
+    min_value = None,
+    max_value = None,
 ):
-    df = pd.read_csv(
-        path, sep="&", header=0, index_col=0, skiprows=skiprows, skipfooter=3, engine="python"
-    )
+    df = pd.read_csv(path, sep="&", header=0, index_col=0, skiprows=skiprows, skipfooter=3, engine="python")
     df = df.drop(df.columns[0], axis=1)
     if None in df.index:
         df = df.drop(index=[None], axis=0)
@@ -177,29 +178,57 @@ def latex_coloring(
         df_min.loc[:, metric_selection] = np.expand_dims(df_selected.min(axis=axis, skipna=True).values, axis=axis)  # type: ignore
         df_max.loc[:, metric_selection] = np.expand_dims(df_selected.max(axis=axis, skipna=True).values, axis=axis)  # type: ignore
 
+    if min_value:
+        df_min.loc[:, metric_selection] = min_value
+    if max_value:
+        df_min.loc[:, metric_selection] = max_value
+
     df2 = df.copy()
     df2[df_selected < 0] = df_min[df_selected < 0] + df[df_selected < 0]
 
     df_color_saturation = df.copy()
-    df_color_saturation.loc[:,:] = 0
+    df_color_saturation.loc[:, :] = 0
     if higher_is_better is None:
         higher_is_better = df.columns
-    df_color_saturation.loc[:, higher_is_better] = (
-        df2.loc[:, higher_is_better] - df_min.loc[:, higher_is_better]
-    ) / (df_max.loc[:, higher_is_better] - df_min.loc[:, higher_is_better])
+    df_color_saturation.loc[:, higher_is_better] = (df2.loc[:, higher_is_better] - df_min.loc[:, higher_is_better]) / (
+        df_max.loc[:, higher_is_better] - df_min.loc[:, higher_is_better]
+    )
     lower_is_better = [metric for metric in lower_is_better if metric in df.columns]
-    df_color_saturation.loc[:, lower_is_better] = (
-        df_max.loc[:, lower_is_better] - df.loc[:, lower_is_better]
-    ) / (df_max.loc[:, lower_is_better] - df_min.loc[:, lower_is_better])
+    df_color_saturation.loc[:, lower_is_better] = (df_max.loc[:, lower_is_better] - df.loc[:, lower_is_better]) / (
+        df_max.loc[:, lower_is_better] - df_min.loc[:, lower_is_better]
+    )
     df_color_saturation = df_color_saturation.abs()
     df_color_saturation = df_color_saturation * 65 + 5
     df_color_saturation.replace(np.nan, 0, inplace=True)
     df_color_saturation = df_color_saturation.astype(int)
 
-    df_latex = df.astype(str).combine(df_color_saturation.astype(str), lambda value, color_saturation: "\\cellcolor{" + value.apply(lambda x: "Green" if float(x) >= 0 else "Red") + "!" + color_saturation + r"} $" + value)
-    df_latex = df_latex + df_std
-    df_latex = df_latex.replace(r" $", value="", regex=True)
-    df_latex = df_latex + "$"
+    df_latex = df.astype(str).combine(df_std.astype(str), lambda val, std: val + std)
+
+    if bold_underline:
+        df_largest = df.copy().astype(float)
+        df_largest[:] = 0
+        df_largest[df.T.apply(lambda x: np.sort(x[~(np.isnan(x))].unique())[-1] == x).T] = 1
+        df_largest[df.T.apply(lambda x: np.sort(x[~(np.isnan(x))].unique())[-2] == x).T] = 2
+
+        df_latex = df_latex.astype(str).combine(
+            df_largest,
+            lambda value, large: r"$"
+            + large.apply(lambda large_val: r"\bm{" if large_val == 1 else r"\underline{" if large_val == 2 else "")
+            + value
+            + large.apply(lambda large_val: r"}" if large_val != 0 else "")
+            + r"$",
+        )
+
+    df_coloring = df.astype(str).combine(
+        df_color_saturation.astype(str),
+        lambda value, color_saturation: "\\cellcolor{"
+        + value.apply(lambda x: "Green" if float(x) >= 0 else "Red")
+        + "!"
+        + color_saturation
+        + r"}",
+    )
+    df_latex = df_coloring + df_latex
+
     df_latex.insert(0, "dataset", df_latex.index.str.strip())
     df_joined_columns = df_latex[df_latex.columns[:]].apply(lambda x: " & ".join(x), axis=1)
     df_joined_columns = df_joined_columns.replace("\\\\", "\\\\\\\\", regex=True)
@@ -207,7 +236,7 @@ def latex_coloring(
 
     for dataset, row in df_joined_columns.items():
         row = row.replace("$", "\\$")
-        run_regex([r's/%s.*\\\\/%s \\\\/g'%(dataset, row)], path)
+        run_regex([r"s/%s.*\\\\/%s \\\\/g" % (dataset, row)], path)
 
 
 ### Generate_latex_file function
