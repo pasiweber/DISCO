@@ -28,6 +28,12 @@ from sklearn.metrics import calinski_harabasz_score as CH
 from src.Evaluation.dunn import dunn_score as DUNN
 
 
+
+METRICS2 = {
+    "DCSI": lambda X, l: DCSI(X, l),  ## min_pts
+    "CVNN": lambda X, l: CVNN(X, l),  ## min_pts
+}
+
 METRICS = {
     "DISCO": lambda X, l: DISCO(X, l),  ## min_pts
     # "DC_DUNN": DC_DUNN,

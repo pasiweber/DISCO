@@ -10,7 +10,9 @@ results/**/*.csv
 latex/
 latex
 clusterings/
+clusterings_/
 clusterings_metrics/
+clusterings_metrics.bak/
 clustering_results/
 clustering_results2/
 

@@ -147,6 +147,7 @@ def latex_coloring(
     metric_selection=None,
     higher_is_better=None,
     lower_is_better=[],
+    inverse_color=[],
     bold_underline=True,
     min_value = None,
     max_value = None,
@@ -181,7 +182,7 @@ def latex_coloring(
     if min_value:
         df_min.loc[:, metric_selection] = min_value
     if max_value:
-        df_min.loc[:, metric_selection] = max_value
+        df_max.loc[:, metric_selection] = max_value
 
     df2 = df.copy()
     df2[df_selected < 0] = df_min[df_selected < 0] + df[df_selected < 0]
@@ -190,12 +191,19 @@ def latex_coloring(
     df_color_saturation.loc[:, :] = 0
     if higher_is_better is None:
         higher_is_better = df.columns
-    df_color_saturation.loc[:, higher_is_better] = (df2.loc[:, higher_is_better] - df_min.loc[:, higher_is_better]) / (
-        df_max.loc[:, higher_is_better] - df_min.loc[:, higher_is_better]
+    # df_color_saturation.loc[:, higher_is_better] = (df2.loc[:, higher_is_better] - df_min.loc[:, higher_is_better]) / (
+    #     df_max.loc[:, higher_is_better] - df_min.loc[:, higher_is_better]
+    # )
+    # lower_is_better = [metric for metric in lower_is_better if metric in df.columns]
+    # df_color_saturation.loc[:, lower_is_better] = (df_max.loc[:, lower_is_better] - df.loc[:, lower_is_better]) / (
+    #     df_max.loc[:, lower_is_better] - df_min.loc[:, lower_is_better]
+    # )
+    df_color_saturation.loc[:, higher_is_better] = (df2.loc[:, higher_is_better] - 0) / (
+        df_max.loc[:, higher_is_better] - 0
     )
     lower_is_better = [metric for metric in lower_is_better if metric in df.columns]
-    df_color_saturation.loc[:, lower_is_better] = (df_max.loc[:, lower_is_better] - df.loc[:, lower_is_better]) / (
-        df_max.loc[:, lower_is_better] - df_min.loc[:, lower_is_better]
+    df_color_saturation.loc[:, lower_is_better] = (0 - df.loc[:, lower_is_better]) / (
+        0 - df_min.loc[:, lower_is_better]
     )
     df_color_saturation = df_color_saturation.abs()
     df_color_saturation = df_color_saturation * 65 + 5
@@ -208,7 +216,15 @@ def latex_coloring(
         df_largest = df.copy().astype(float)
         df_largest[:] = 0
         df_largest[df.T.apply(lambda x: np.sort(x[~(np.isnan(x))].unique())[-1] == x).T] = 1
-        df_largest[df.T.apply(lambda x: np.sort(x[~(np.isnan(x))].unique())[-2] == x).T] = 2
+        
+        def safe_check(x):
+            unique_vals = np.sort(x[~np.isnan(x)].unique())
+            if len(unique_vals) < 2:
+                # No second-to-last value, return False mask (no changes)
+                return pd.Series([False]*len(x), index=x.index)
+            else:
+                return x == unique_vals[-2]
+        df_largest[df.T.apply(safe_check).T] = 2
 
         df_latex = df_latex.astype(str).combine(
             df_largest,
@@ -219,10 +235,12 @@ def latex_coloring(
             + r"$",
         )
 
+    inverse_color = [metric for metric in inverse_color if metric in df.columns]
+
     df_coloring = df.astype(str).combine(
         df_color_saturation.astype(str),
         lambda value, color_saturation: "\\cellcolor{"
-        + value.apply(lambda x: "Green" if float(x) >= 0 else "Red")
+        + value.apply(lambda x, col=value.name: "Green" if (float(x) >= 0 if col not in inverse_color else float(x) <= 0) else "Red")
         + "!"
         + color_saturation
         + r"}",

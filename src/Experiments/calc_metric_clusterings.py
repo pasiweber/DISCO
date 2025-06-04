@@ -10,7 +10,7 @@ os.environ["TZ"] = "Europe/Vienna"
 
 from ast import literal_eval
 
-from src.utils.metrics import METRICS
+from src.utils.metrics import METRICS, METRICS2
 from datasets.density_datasets import Datasets as DensityDatasets
 from datasets.real_world_datasets import Datasets as RealWorldDatasets
 
@@ -75,7 +75,7 @@ async_jobs = {}
 for dataset in DATASETs:
     for clusterer in CLUSTER_ALGORITHMS.keys():
         for run in range(RUNS):
-            for metric_name, metric_func in METRICS.items():
+            for metric_name, metric_func in METRICS2.items():
                 metric_save_path = f"{DISCO_ROOT_PATH}/clusterings_metrics/{DATASET_PATH}/{dataset.id}/{clusterer}_{run}##{metric_name}.csv"
                 if os.path.exists(metric_save_path):
                     print(f"Skipping -- {dataset.id=}, {clusterer=}, {run=}, {metric_name=}")
