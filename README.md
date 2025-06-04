@@ -1,4 +1,4 @@
-# DISCO: DISCO: Internal Evaluation of Density-Based Clustering with Noise Labels
+# DISCO: Internal Evaluation of Density-Based Clustering with Noise Labels
 
 This repository is the official implementation of DISCO: Internal Evaluation of Density-Based Clustering with Noise Labels, submitted to [IEEE ICDM 2025](https://www3.cs.stonybrook.edu/~icdm2025/index.html).
 
@@ -20,7 +20,6 @@ The code used to generate these examples can be found [here](src/Experiments/Jup
 
 ```bash
 .
-│
 ├── data                                    # dataset infos
 │
 ├── datasets  
