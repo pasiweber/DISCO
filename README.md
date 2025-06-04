@@ -9,6 +9,13 @@ This repository is the official implementation of DISCO: Internal Evaluation of 
 
 ![Motivation](imgs/Motivation.png)
 
+Notebook to generate this can be found [here](src/Experiments/JupyterNotebooks_SyntheticExperiments/Table3.ipynb).
+
+## DISCO - Score
+DISCO is designed on a pointwise level:
+![Pointwise](imgs/PointwiseExample.png)
+The code used to generate these examples can be found [here](src/Experiments/JupyterNotebooks_SyntheticExperiments/Pointwise.ipynb).
+
 ## Structure of the repository
 
 ```bash
@@ -44,6 +51,9 @@ This repository is the official implementation of DISCO: Internal Evaluation of 
 
 
 ## Experimental Setup
+![Ablation](imgs/AblationMinPts.png)
+The experiments for the ablation study can be found [here](src/Experiments/JupyterNotebooks_SyntheticExperiments/Ablation_Experiment.ipynb). We set our hyperparameter to $\mu$=5 across all experiments.
+
 | Method  | Hyperparameter                  | Value | 
 |---------|---------------------------------|-------|
 | CDBW    | number of representative points | 10    | 
