@@ -57,13 +57,11 @@ def cvnn_score(data, labels, k=10):
             # Separation: proportion of k-NN of objects in i that don't belong to i
             knn_i = knn_matrix[ind_i, :][:, ind_i]
             sep_i = np.sum(knn_i) / (len(ind_i) * k)
-
             Sep_list.append(sep_i)
 
             # Compactness: average pairwise distance between objects in same cluster
             dist_i = dist[np.ix_(ind_i, ind_i)]
             comp_i = np.mean(dist_i[np.triu_indices(len(ind_i), 1)])
-
             Comp_list.append(comp_i)
 
     # calculate CVNN

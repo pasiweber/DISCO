@@ -19,7 +19,7 @@ from src.utils.cluster_algorithms import CLUSTER_ALGORITHMS
 from mpire.pool import WorkerPool
 
 
-n_jobs = 3
+n_jobs = 5
 task_timeout = 12 * 60 * 60  # 12 hours
 
 # DATASETs = DensityDatasets
@@ -27,7 +27,6 @@ task_timeout = 12 * 60 * 60  # 12 hours
 # RUNS = 10
 
 DATASETs = RealWorldDatasets.get_experiments_list()
-DATASETs.reverse()
 DATASET_PATH = "real_world_standardized"
 RUNS = 1
 

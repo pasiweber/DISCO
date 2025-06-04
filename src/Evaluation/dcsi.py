@@ -24,24 +24,25 @@ def dcsi_score(data, partition, min_pts=5):
     #        partition[partition == clusters[i]] = -1
     #        clusters[i] = -1
     # all clusters except for -1
-    #clusters = np.setdiff1d(clusters, -1)
+    clusters = np.setdiff1d(clusters, -1)
     # if no clusters left or just one cluster left return 0
     #if len(clusters) == 0 or len(clusters) == 1:
     #    return 0
     # exclude noise points from dataset
-    #data = data[partition != -1, :]
+    data = data[partition != -1, :]
     # calculate squared euclidean distance
     dist = squareform(pdist(data)) ** 2
 
     # original labelling
     poriginal = partition
     # exclude noise points from labeling
-    #partition = partition[partition != -1]
+    partition = partition[partition != -1]
     cluster_labels = np.unique(partition)
     n_clusters = len(cluster_labels)
     dcsi = 0
     MST = {}
     CORE_PTS = {}
+    core_labels = []
     for i in range(0, n_clusters):
         # indices of objects in cluster i
         objects_cl = np.where(partition == cluster_labels[i])[0]
@@ -49,16 +50,20 @@ def dcsi_score(data, partition, min_pts=5):
         dist_i = dist[np.ix_(objects_cl, objects_cl)]
         epsilon = calculate_epsilon(dist_i, 2 * min_pts)
         CORE_PTS[cluster_labels[i]] = core_points(dist_i, epsilon, min_pts)
-        #if len(CORE_PTS[cluster_labels[i]]) == 0:
-        #    return -1
+        # the official implementation only looks at core points (line 249 official git for i in unique(labels_core))
+        if len(CORE_PTS[cluster_labels[i]]) == 0:
+            continue
+        core_labels.append(cluster_labels[i])
         dist_i = dist_i[np.ix_(CORE_PTS[cluster_labels[i]], CORE_PTS[cluster_labels[i]])]
         MST[cluster_labels[i]] = minimal_spanning_tree(dist_i)
 
     for i in range(0, n_clusters - 1):
-        for j in range(i + 1, n_clusters):
-            part = pairwise_dcsi(MST, CORE_PTS, data, partition, cluster_labels[i], cluster_labels[j])
+        if i in core_labels:
+            for j in range(i + 1, n_clusters):
+                if j in core_labels:
+                    part = pairwise_dcsi(MST, CORE_PTS, data, partition, cluster_labels[i], cluster_labels[j])
 
-            dcsi = dcsi + part
+                    dcsi = dcsi + part
     dcsi = (2 / (n_clusters * (n_clusters - 1))) * dcsi
 
     return dcsi
