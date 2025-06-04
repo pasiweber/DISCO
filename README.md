@@ -12,7 +12,7 @@ This repository is the official implementation of DISCO: Internal Evaluation of 
 Notebook to generate this can be found [here](src/Experiments/JupyterNotebooks_SyntheticExperiments/Table3.ipynb).
 
 ## DISCO - Score
-DISCO is designed on a pointwise level:
+[DISCO](src/Evaluation/disco.py) is designed on a pointwise level:
 ![Pointwise](imgs/PointwiseExample.png)
 The code used to generate these examples can be found [here](src/Experiments/JupyterNotebooks_SyntheticExperiments/Pointwise.ipynb).
 
@@ -20,7 +20,6 @@ The code used to generate these examples can be found [here](src/Experiments/Jup
 
 ```bash
 .
-├── clusterings_                            # saved kmeans clustering
 │
 ├── data                                    # dataset infos
 │
