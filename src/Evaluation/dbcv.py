@@ -317,6 +317,7 @@ def validity_index(
     d=None,
     per_cluster_scores=False,
     mst_raw_dist=False,
+    get_internal_mst=False,
     verbose=False,
     **kwd_args
 ):
@@ -465,5 +466,7 @@ def validity_index(
 
     if per_cluster_scores:
         return result, cluster_validity_indices
+    elif get_internal_mst:
+        return result, mst_nodes, mst_edges
     else:
         return result

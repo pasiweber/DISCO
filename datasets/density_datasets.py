@@ -15,7 +15,7 @@ DATASETS_FOLDER = f"{CURRENT_DIRECTORY}"
 
 
 class Datasets(AbstractDatasets):
-    three_spiral = "3-spiral"
+    three_spiral = "three_spiral"
     aggregation = "aggregation"
     chainlink = "chainlink"
     cluto_t4_8k = "cluto-t4-8k"
@@ -28,6 +28,7 @@ class Datasets(AbstractDatasets):
     dartboard1 = "dartboard1"
     diamond9 = "diamond9"
     smile1 = "smile1"
+    zelnik4 = "zelnik4"
 
     def load_dataset(self):
         match self:
@@ -57,6 +58,8 @@ class Datasets(AbstractDatasets):
                 return download_dataset("diamond9")
             case self.smile1:
                 return download_dataset("smile1")
+            case self.zelnik4:
+                return download_dataset("zelnik4")
             case _:
                 raise AttributeError
 
