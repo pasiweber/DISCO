@@ -289,11 +289,11 @@ class DCTree:
         pointer_right = "   "
         pointer_left = "   " if node.right else "   "
         return (
-            f"\n   {padding.replace("|", " ")}// #region"
+            f"\n   {padding.replace('|', ' ')}// #region"
             f"\n{padding}{pointer}{node}"
             f"{self.__repr__help(node.left, pointer_left, padding_for_both, node.right is not None)}"
             f"{self.__repr__help(node.right, pointer_right, padding_for_both, False)}"
-            f"\n   {padding.replace("|", " ")}// #endregion"
+            f"\n   {padding.replace('|', ' ')}// #endregion"
         )
 
     def dc_dist(self, i: int, j: int) -> float:
@@ -790,27 +790,46 @@ class _SparseTable:
     Needs O(n * logn) time and storage to precompute and O(1) for the query.
     """
 
-    arr: List[int]
-    sparse_table: List[List[int]]
+    # arr: List[int]
+    arr: np.ndarray
+    # sparse_table: List[List[int]]
+    sparse_table: np.ndarray
     pow_2: List[int]
     log_2: List[int]
 
     def __init__(self, arr: List[int]):
-        self.arr = arr
+        self.arr = np.asarray(arr, dtype=np.int64)
         n = len(arr)
         log_n = n.bit_length() - 1
-        self.sparse_table = [[-1] * log_n for _ in range(n - 1)]
+        # self.sparse_table = [[-1] * log_n for _ in range(n - 1)]
+        self.sparse_table = np.full((n, log_n), -1, dtype=np.int64)
+
         self.pow_2 = [1 << i for i in range(log_n + 1)]
         self.log_2 = [i.bit_length() - 1 for i in range(n)]
 
-        for i in range(0, n - 1):
-            self.sparse_table[i][0] = i if self.arr[i] < self.arr[i + 1] else i + 1
+        # for i in range(0, n - 1):
+        #     self.sparse_table[i][0] = i if self.arr[i] < self.arr[i + 1] else i + 1
+        idx = np.arange(n - 1, dtype=np.int64)
+        self.sparse_table[: n - 1, 0] = np.where(self.arr[idx] < self.arr[idx + 1],
+                                                 idx,
+                                                 idx + 1)
 
         for j in range(1, log_n):
-            for i in range(n - self.pow_2[j + 1] + 1):
-                L = self.sparse_table[i][j - 1]
-                R = self.sparse_table[i + self.pow_2[j]][j - 1]
-                self.sparse_table[i][j] = L if arr[L] <= arr[R] else R
+            step = self.pow_2[j]                         # 2**j
+            limit = n - self.pow_2[j + 1] + 1          # number of start positions
+            left_idx  = self.sparse_table[:limit, j-1]               # L for i = 0..limit‑1
+            right_idx = self.sparse_table[step:step+limit, j-1]       # R for i = 0..limit‑1
+            choose_left = self.arr[left_idx] <= self.arr[right_idx]
+
+            self.sparse_table[:limit, j] = np.where(choose_left,
+                                                    left_idx,
+                                                    right_idx)
+
+
+            # for i in range(n - self.pow_2[j + 1] + 1):
+            #     L = self.sparse_table[i][j - 1]
+            #     R = self.sparse_table[i + step][j - 1]
+            #     self.sparse_table[i][j] = L if arr[L] <= arr[R] else R
 
     def query(self, l: int, r: int) -> int:
         # assert L > R, f"L value ({L}) needs to be larger than R value ({R})"
