@@ -17,6 +17,7 @@ from sklearn.metrics import silhouette_samples
 from sklearn.neighbors import KDTree
 
 from src.Evaluation.dcdistances.dctree import DCTree
+# from SHiP import SHiP
 
 
 def disco_score(X: np.ndarray, labels: np.ndarray, min_points: int = 5) -> float:
@@ -179,9 +180,9 @@ def disco_samples(X: np.ndarray, labels: np.ndarray, min_points: int = 5) -> np.
     if len(label_set) == 1 and label_set != {-1}:
         return np.full(len(X), 0)
 
+    dc_dists = dc_distances(X, min_points=min_points)
     # One cluster with noise
     if len(label_set) == 2 and -1 in label_set:
-        dc_dists = DCTree(X, min_points=min_points, no_fastindex=False).dc_distances()
         l_ = labels.copy()
         l_[l_ == -1] = np.arange(-1, -len(l_[l_ == -1]) - 1, -1)
         disco_values = np.empty(len(X))
@@ -191,7 +192,6 @@ def disco_samples(X: np.ndarray, labels: np.ndarray, min_points: int = 5) -> np.
 
     # More then one cluster with optional noise
     else:
-        dc_dists = DCTree(X, min_points=min_points, no_fastindex=False).dc_distances()
         disco_values = np.empty(len(X))
         non_noise_dc_dists = dc_dists[np.ix_(labels != -1, labels != -1)]
         non_noise_labels = labels[labels != -1]
@@ -275,7 +275,7 @@ def p_cluster(
             raise ValueError("`X` needs to be a distance matrix if `precomputed_dc_dists` is `True`.")
         dc_dists = X
     else:
-        dc_dists = DCTree(X, min_points=min_points, no_fastindex=False).dc_distances()
+        dc_dists = dc_distances(X, min_points=min_points)
 
     return silhouette_samples(dc_dists, labels, metric="precomputed")
 
@@ -358,7 +358,7 @@ def p_noise(
 
     ## At least one cluster and noise ##
     if dc_dists is None:
-        dc_dists = DCTree(X, min_points=min_points, no_fastindex=False).dc_distances()
+        dc_dists = dc_distances(X, min_points=min_points)
 
     tree = KDTree(X)
     core_dists, _ = tree.query(X, k=min_points)
@@ -398,3 +398,16 @@ def p_noise(
         p_far = np.minimum(p_far, p_far_i)
 
     return p_sparse, p_far
+
+
+def dc_distances(X, min_points=5):
+    # ship = SHiP(data=X, treeType="DCTree", config={
+    #     "tiebreaker_method": "random",
+    #     "relaxed": False,
+    #     "min_points": min_points,
+    # })
+    # dc_dists = ship.get_tree(0).distance_matrix()
+    # np.fill_diagonal(dc_dists, 0)
+
+    dc_dists = DCTree(X, min_points=min_points, no_fastindex=True).dc_distances()
+    return dc_dists

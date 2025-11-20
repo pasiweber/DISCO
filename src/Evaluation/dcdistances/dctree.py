@@ -159,7 +159,7 @@ class DCTree:
         min_points: int = 5,
         min_points_mr: Optional[int] = None,
         access_method: str = "tree",
-        no_fastindex: bool = False,
+        no_fastindex: bool = True,
         use_less_memory: bool = False,
         n_jobs: Optional[int] = None,
         precomputed = False,
@@ -276,9 +276,7 @@ class DCTree:
             f"{self.__repr__help(self.root.right, pointer_right, '', False)}"
         )
 
-    def __repr__help(
-        self, node: Optional[_DCNode], pointer: str, padding: str, has_right_sibling: bool
-    ):
+    def __repr__help(self, node: Optional[_DCNode], pointer: str, padding: str, has_right_sibling: bool):
         if node is None:
             return ""
 
@@ -337,12 +335,16 @@ class DCTree:
         if Y is None:
             Y = X
 
-        dc_dists = np.zeros((len(X), len(Y)))
-
         if access_method is None:
             access_method = self.access_method
 
-        if access_method == "dc_dist":
+        if access_method == "dc_dist" and self.no_fastindex:
+            print("No fastindex computed. Fallback to access_method: `tree`.")
+            access_method = "tree"
+
+        if access_method == "dc_dist" and not self.no_fastindex:
+            dc_dists = np.zeros((len(X), len(Y)))
+
             for i in range(len(X)):
                 for j in range(i + 1 if X is Y else 0, len(Y)):
                     if X[i] != Y[j]:
@@ -352,6 +354,8 @@ class DCTree:
             return dc_dists
 
         elif access_method == "tree":
+            dc_dists = np.zeros((len(X), len(Y)))
+
             idx_rev_X = np.full(self.n, -1)
             idx_rev_X[X] = range(len(X))
 
@@ -361,8 +365,9 @@ class DCTree:
                 idx_rev_Y = np.full(self.n, -1)
                 idx_rev_Y[Y] = range(len(Y))
 
-            inodes_start = self.n
-            inodes_end = 2 * self.n - 1
+            inodes = self.get_internal_nodes()
+            inodes_start = 0
+            inodes_end = len(inodes)
 
             n_jobs = self.n_jobs if self.no_gil else 4
             pool = ThreadPool(n_jobs)
@@ -372,7 +377,7 @@ class DCTree:
 
             def func(start):
                 for i in range(start, min(start + chunk_size, inodes_end)):
-                    inode = self.euler[self.f_occur[i]]
+                    inode = inodes[i]
                     # inode always has left and right node
                     i_leaves = inode.left.leaves
                     j_leaves = inode.right.leaves
@@ -462,9 +467,7 @@ class DCTree:
     def _euler_tour(self, root: _DCNode):
         """Euler tour to get the euler, level, and f_occur lists in O(n) time."""
         DOWN, UP = 0, 1
-        stack: deque[Tuple[_DCNode, int, Literal[0, 1]]] = deque(
-            [(root, 0, DOWN)]
-        )  # (node, level, DOWN / UP)
+        stack: deque[Tuple[_DCNode, int, Literal[0, 1]]] = deque([(root, 0, DOWN)])  # (node, level, DOWN / UP)
 
         pos = 0
         while len(stack):
@@ -489,6 +492,23 @@ class DCTree:
                 self.euler[pos] = node
                 self.level[pos] = level
                 pos += 1
+
+    def get_internal_nodes(self):
+        nodes = []
+        stack: deque[_DCNode] = deque([self.root])
+
+        while len(stack):
+            node = stack.pop()
+
+            if node and node.left and node.right:
+                nodes.append(node)
+
+            if node.left:
+                stack.append(node.left)
+
+            if node.right:
+                stack.append(node.right)
+        return nodes
 
     def traverse_until_k(self, k):
         from queue import PriorityQueue
@@ -679,9 +699,7 @@ def calculate_reachability_distance(
     """
 
     if min_points > points.shape[0]:
-        raise ValueError(
-            f"Min points ({min_points}) can't exceed the size of the dataset ({points.shape[0]})"
-        )
+        raise ValueError(f"Min points ({min_points}) can't exceed the size of the dataset ({points.shape[0]})")
 
     eucl_dists = pairwise_distances(points, metric="euclidean", n_jobs=n_jobs)
 
@@ -712,8 +730,8 @@ class _DCNode:
         leaves: List[int],
         left: Optional[_DCNode] = None,
         right: Optional[_DCNode] = None,
-        parent = None,
-        k = -1,
+        parent=None,
+        k=-1,
     ):
         self.id = id
         self.dist = dist
@@ -810,21 +828,16 @@ class _SparseTable:
         # for i in range(0, n - 1):
         #     self.sparse_table[i][0] = i if self.arr[i] < self.arr[i + 1] else i + 1
         idx = np.arange(n - 1, dtype=np.int64)
-        self.sparse_table[: n - 1, 0] = np.where(self.arr[idx] < self.arr[idx + 1],
-                                                 idx,
-                                                 idx + 1)
+        self.sparse_table[: n - 1, 0] = np.where(self.arr[idx] < self.arr[idx + 1], idx, idx + 1)
 
         for j in range(1, log_n):
-            step = self.pow_2[j]                         # 2**j
-            limit = n - self.pow_2[j + 1] + 1          # number of start positions
-            left_idx  = self.sparse_table[:limit, j-1]               # L for i = 0..limit‑1
-            right_idx = self.sparse_table[step:step+limit, j-1]       # R for i = 0..limit‑1
+            step = self.pow_2[j]  # 2**j
+            limit = n - self.pow_2[j + 1] + 1  # number of start positions
+            left_idx = self.sparse_table[:limit, j - 1]  # L for i = 0..limit‑1
+            right_idx = self.sparse_table[step : step + limit, j - 1]  # R for i = 0..limit‑1
             choose_left = self.arr[left_idx] <= self.arr[right_idx]
 
-            self.sparse_table[:limit, j] = np.where(choose_left,
-                                                    left_idx,
-                                                    right_idx)
-
+            self.sparse_table[:limit, j] = np.where(choose_left, left_idx, right_idx)
 
             # for i in range(n - self.pow_2[j + 1] + 1):
             #     L = self.sparse_table[i][j - 1]
