@@ -20,6 +20,7 @@ from src.Evaluation.cvnn import cvnn_score as CVNN
 from src.Evaluation.dsi import dsi_score as DSI
 from src.Evaluation.lccv import lccv_score as LCCV
 from src.Evaluation.viasckde import viasckde_score as VIASCKDE
+from src.Evaluation.mmj import mmj_sc_score as MMJ_SC, mmj_ch_score as MMJ_CH, mmj_db_score as MMJ_DB
 
 # Gauss
 from sklearn.metrics import silhouette_score as SILHOUETTE
